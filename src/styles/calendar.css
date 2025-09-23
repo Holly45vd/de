@@ -1,0 +1,44 @@
+/* src/styles/calendar.css */
+
+/* 전체 캘린더 간격 */
+.react-calendar {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* 요일 헤더 스타일 */
+.react-calendar__month-view__weekdays {
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* 각 날짜 셀의 높이와 줄 간격 고정 */
+.react-calendar__tile {
+  height: 80px !important; /* 셀 높이 고정 */
+  max-height: 80px !important;
+  line-height: 20px !important; /* 날짜와 아이콘 간 간격 */
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box;
+  transition: background-color 0.2s;
+  color: black !important; /* 항상 글씨는 검정 */
+}
+
+/* 날짜 클릭 시 하이라이트 */
+.react-calendar__tile--active {
+  background: #fffae6 !important;
+  color: black !important; /* 클릭 시에도 검정 유지 */
+  font-weight: bold; /* 선택된 날짜 강조 */
+  border-radius: 8px;
+}
+
+/* hover 효과 */
+.react-calendar__tile:hover {
+  background: #e6f7ff !important;
+  color: black !important; /* hover 시에도 검정 유지 */
+}
