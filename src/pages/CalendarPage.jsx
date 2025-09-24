@@ -1,6 +1,6 @@
 // src/pages/CalendarPage.jsx
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Card, CardContent } from "@mui/material";
+import { Box, Typography, Card, CardContent, Button } from "@mui/material";
 import Calendar from "react-calendar";
 import "../styles/calendar.css";
 import "react-calendar/dist/Calendar.css";
@@ -10,6 +10,7 @@ import { db } from "../firebase/firebaseConfig";
 import { useAuth } from "../context/AuthContext";
 import { moodIcons } from "../context/moodIcons";
 import { useNavigate } from "react-router-dom";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 
 export default function CalendarPage() {
   const { currentUser } = useAuth();
@@ -17,11 +18,10 @@ export default function CalendarPage() {
 
   const [diaries, setDiaries] = useState([]);
   const [diariesByDate, setDiariesByDate] = useState({});
-  const [selectedDate, setSelectedDate] = useState(
-    dayjs().format("YYYY-MM-DD")
-  );
+  const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [selectedDiaries, setSelectedDiaries] = useState([]);
 
+  // ✅ 파이어스토어에서 일기 데이터 불러오기
   useEffect(() => {
     const fetchDiaries = async () => {
       if (!currentUser?.uid) return;
@@ -42,6 +42,7 @@ export default function CalendarPage() {
           allDiaries.push(diary);
 
           const dateKey = dayjs(data.date.toDate()).format("YYYY-MM-DD");
+          // 같은 날짜에 여러 개가 있어도 하나의 아이콘만 표시
           if (!byDate[dateKey]) {
             byDate[dateKey] = data.mood;
           }
@@ -50,11 +51,10 @@ export default function CalendarPage() {
         setDiaries(allDiaries);
         setDiariesByDate(byDate);
 
-        // 오늘 날짜 기준으로 초기 세팅
+        // 오늘 날짜 초기값 설정
         const todayKey = dayjs().format("YYYY-MM-DD");
         const todayDiaries = allDiaries.filter(
-          (diary) =>
-            dayjs(diary.date.toDate()).format("YYYY-MM-DD") === todayKey
+          (diary) => dayjs(diary.date.toDate()).format("YYYY-MM-DD") === todayKey
         );
         setSelectedDiaries(todayDiaries);
         setSelectedDate(todayKey);
@@ -66,6 +66,7 @@ export default function CalendarPage() {
     fetchDiaries();
   }, [currentUser]);
 
+  // ✅ 날짜 클릭 시 해당 날짜의 일기 목록 표시
   const handleDateClick = (date) => {
     const dateKey = dayjs(date).format("YYYY-MM-DD");
     setSelectedDate(dateKey);
@@ -77,18 +78,47 @@ export default function CalendarPage() {
     setSelectedDiaries(filtered);
   };
 
+  // ✅ 캘린더 타일 표시
   const renderTileContent = ({ date, view }) => {
     if (view !== "month") return null;
     const dateKey = dayjs(date).format("YYYY-MM-DD");
 
+    // 해당 날짜에 일기가 있으면 날짜 대신 아이콘 크게 표시
     if (diariesByDate[dateKey]) {
       return (
-        <div style={{ fontSize: "1.2rem", marginTop: "4px" }}>
-          {moodIcons[diariesByDate[dateKey]]}
+        <div
+          style={{
+            textAlign: "center",
+            marginTop: "2px",
+          }}
+        >
+          <img
+            src={moodIcons[diariesByDate[dateKey]]?.color}
+            alt="mood"
+            style={{
+              width: 40,
+              height: 32,
+              display: "block",
+              margin: "0 auto",
+            }}
+          />
         </div>
       );
     }
-    return null;
+
+    // 없으면 기본 날짜 표시 유지
+    return (
+      <div
+        style={{
+          fontSize: "0.9rem",
+          textAlign: "center",
+          marginTop: "4px",
+          color: "#333",
+        }}
+      >
+        {date.getDate()}
+      </div>
+    );
   };
 
   const handleCardClick = (id) => {
@@ -96,7 +126,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <Box sx={{ p: 2, mt: 8, textAlign: "center" }}>
+    <Box sx={{ p: 2, mt:2, textAlign: "center" }}>
       <Typography variant="h5" mb={2}>
         캘린더
       </Typography>
@@ -107,6 +137,10 @@ export default function CalendarPage() {
         value={dayjs(selectedDate).toDate()}
         onClickDay={handleDateClick}
         tileContent={renderTileContent}
+        tileClassName={({ date }) => {
+          const dateKey = dayjs(date).format("YYYY-MM-DD");
+          return diariesByDate[dateKey] ? "has-diary" : "";
+        }}
       />
 
       {/* 선택된 날짜의 일기 목록 */}
@@ -131,9 +165,17 @@ export default function CalendarPage() {
               onClick={() => handleCardClick(diary.id)}
             >
               <CardContent>
-                <Typography variant="body2">
-                  {moodIcons[diary.mood]} X {diary.score}
-                </Typography>
+                {/* 감정 아이콘 + 점수 */}
+                <Box display="flex" alignItems="center" gap={1}>
+                  <img
+                    src={moodIcons[diary.mood]?.color}
+                    alt={diary.mood}
+                    style={{ width: 30, height: 30 }}
+                  />
+                  <Typography variant="body2"> 여기에 기분 아이콘이 들어가야하는데 </Typography>
+                </Box>
+
+                {/* 내용 */}
                 <Typography variant="body1" sx={{ mt: 1 }}>
                   {diary.content.length > 20
                     ? `${diary.content.slice(0, 20)}...`
@@ -143,11 +185,31 @@ export default function CalendarPage() {
             </Card>
           ))
         ) : (
-          <Typography>
-            {selectedDate === dayjs().format("YYYY-MM-DD")
-              ? "오늘 작성된 일기가 없습니다."
-              : "이 날짜에는 작성된 일기가 없습니다."}
-          </Typography>
+          <Box sx={{ mt: 3, textAlign: "center" }}>
+            <Typography sx={{ mb: 2 }}>
+              {selectedDate === dayjs().format("YYYY-MM-DD")
+                ? "오늘 작성된 일기가 없습니다."
+                : "이 날짜에는 작성된 일기가 없습니다."}
+            </Typography>
+
+            {/* 새 일기 쓰기 버튼 */}
+            <Button
+              variant="contained"
+              startIcon={<EditNoteIcon />}
+              onClick={() => navigate("/editor")}
+              sx={{
+                backgroundColor: "#45C4B0",
+                color: "#fff",
+                fontWeight: "bold",
+                px: 3,
+                "&:hover": {
+                  backgroundColor: "#3ca896",
+                },
+              }}
+            >
+              새 일기 쓰기
+            </Button>
+          </Box>
         )}
       </Box>
     </Box>

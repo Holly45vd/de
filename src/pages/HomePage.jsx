@@ -1,4 +1,3 @@
-// src/pages/HomePage.jsx
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Grid, Card, CardContent } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -68,8 +67,8 @@ export default function HomePage() {
                 <Card
                   onClick={() => navigate(`/diary/${diary.id}`)}
                   sx={{
-                    width: 250, // 카드 가로 크기 고정
-                    height: 180, // 카드 세로 크기 고정
+                    width: 250,
+                    height: 180,
                     backgroundColor: "#f9f9f9",
                     borderRadius: 2,
                     boxShadow: 2,
@@ -91,12 +90,25 @@ export default function HomePage() {
                       p: 2,
                     }}
                   >
+                    {/* mood 아이콘 출력 */}
                     <Typography variant="h6" gutterBottom>
-                      {moodIcons[diary.mood] || "📝"}
+                      {moodIcons[diary.mood]?.color ? (
+                        <img
+                          src={moodIcons[diary.mood].color}
+                          alt={diary.mood}
+                          width={30}
+                          height={30}
+                          style={{ objectFit: "contain", display: "block" }}
+                        />
+                      ) : (
+                        "📝"
+                      )}
                     </Typography>
+
                     <Typography variant="subtitle2" color="textSecondary">
                       {diary.date?.toDate().toLocaleDateString()}
                     </Typography>
+
                     <Typography
                       variant="body2"
                       sx={{
@@ -107,6 +119,7 @@ export default function HomePage() {
                     >
                       {contentPreview}
                     </Typography>
+
                     <Typography
                       variant="caption"
                       color="textSecondary"
