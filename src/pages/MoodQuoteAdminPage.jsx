@@ -15,6 +15,8 @@ const moods = [
   { id: "happiness", label: "행복" },
   { id: "hope", label: "희망" },
   { id: "growth", label: "성장" },
+    { id: "confident", label: "자신감" },
+  { id: "adventurous", label: "모험" },
 ];
 
 export default function MoodQuoteAdminPage() {

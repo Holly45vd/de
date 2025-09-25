@@ -59,7 +59,7 @@ export default function DiaryEditor() {
   const [content, setContent] = useState("");
   const [quotes, setQuotes] = useState([]);
   const [selectedQuote, setSelectedQuote] = useState("");
-  const [hoveredMood, setHoveredMood] = useState(null); // hover 상태 관리
+  const [hoveredMood, setHoveredMood] = useState(null);
 
   /** 수정 모드 시 기존 데이터 불러오기 */
   useEffect(() => {
@@ -87,12 +87,18 @@ export default function DiaryEditor() {
     const fetchQuotes = async () => {
       if (!mood) return;
       try {
+        console.log("선택된 mood key:", mood); // key 로그 확인
+
         const snap = await getDoc(doc(db, "moodQuotes", mood));
         if (snap.exists()) {
           setQuotes(snap.data().quotes || []);
+        } else {
+          console.error(`Firestore 문서가 존재하지 않음 → key: ${mood}`);
+          setQuotes([]);
         }
       } catch (error) {
         console.error("추천 문구 불러오기 실패:", error);
+        setQuotes([]);
       }
     };
     fetchQuotes();
@@ -170,9 +176,9 @@ export default function DiaryEditor() {
                 <Grid
                   item
                   key={key}
-                  xs={4} // 모바일: 한 줄에 3개
+                  xs={4} // 모바일: 3개
                   sm={4}
-                  md={2.4} // PC: 한 줄에 5개
+                  md={2.4} // PC: 5개
                   sx={{ textAlign: "center" }}
                 >
                   <Box
@@ -196,7 +202,6 @@ export default function DiaryEditor() {
                       },
                     }}
                   >
-                    {/* 기분 아이콘 */}
                     <img
                       src={isSelected || isHovered ? iconData.color : iconData.gray}
                       alt={iconData.en}
@@ -208,8 +213,6 @@ export default function DiaryEditor() {
                         transition: "0.3s",
                       }}
                     />
-
-                    {/* 영어 + 한국어 라벨 */}
                     <Typography
                       variant="body2"
                       sx={{
@@ -254,7 +257,6 @@ export default function DiaryEditor() {
           >
             {scoreIcons.map((item, index) => {
               const isSelected = score === index + 1;
-
               return (
                 <Box
                   key={index}
@@ -290,14 +292,13 @@ export default function DiaryEditor() {
         </Box>
 
         {/* 추천 문구 */}
-        {quotes.length > 0 && (
-          <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3 }}>
+          {quotes.length > 0 ? (
             <TextField
               select
               value={selectedQuote}
               onChange={(e) => handleInsertQuote(e.target.value)}
               fullWidth
-              displayEmpty
               SelectProps={{
                 displayEmpty: true,
                 MenuProps: {
@@ -306,12 +307,6 @@ export default function DiaryEditor() {
                       maxHeight: 200,
                     },
                   },
-                },
-              }}
-              InputProps={{
-                style: {
-                  color: selectedQuote ? "#000" : "#888",
-                  fontSize: "0.9rem",
                 },
               }}
               placeholder="추천문구를 선택하면 일기 내용에 포함됩니다."
@@ -325,15 +320,22 @@ export default function DiaryEditor() {
               <MenuItem value="" disabled>
                 추천문구를 선택하면 일기 내용에 포함됩니다.
               </MenuItem>
-
               {quotes.map((quote, index) => (
                 <MenuItem key={index} value={quote}>
                   {quote}
                 </MenuItem>
               ))}
             </TextField>
-          </Box>
-        )}
+          ) : (
+            <Typography
+              variant="body2"
+              color="textSecondary"
+              textAlign="center"
+            >
+              추천 문구가 없습니다.
+            </Typography>
+          )}
+        </Box>
 
         {/* 본문 입력 */}
         <TextField

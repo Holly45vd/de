@@ -3,21 +3,38 @@ import { Box, Typography, Button } from "@mui/material";
 import dayjs from "dayjs";
 import { moodIcons } from "../context/moodIcons";
 import { Link, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faFaceSadTear,
+  faFaceTired,
+  faFaceMeh,
+  faFaceSmileWink,
+  faFaceLaughBeam,
+} from "@fortawesome/free-regular-svg-icons";
+import {
+  faFaceSadTear as fasFaceSadTear,
+  faFaceTired as fasFaceTired,
+  faFaceMeh as fasFaceMeh,
+  faFaceSmileWink as fasFaceSmileWink,
+  faFaceLaughBeam as fasFaceLaughBeam,
+} from "@fortawesome/free-solid-svg-icons";
+
+const scoreIcons = [
+  { gray: faFaceSadTear, color: fasFaceSadTear, label: "매우 나쁨" },
+  { gray: faFaceTired, color: fasFaceTired, label: "나쁨" },
+  { gray: faFaceMeh, color: fasFaceMeh, label: "보통" },
+  { gray: faFaceSmileWink, color: fasFaceSmileWink, label: "좋음" },
+  { gray: faFaceLaughBeam, color: fasFaceLaughBeam, label: "매우 좋음" },
+];
 
 export default function TodayStatus({ todayDiary }) {
-  const today = dayjs().format("YYYY-MM-DD");
+  const today = dayjs().format("MM-DD"); // 년도 제외하고 월-일만 표시
   const navigate = useNavigate();
 
   const handleViewDiary = () => {
     if (todayDiary?.id) {
       navigate(`/diary/${todayDiary.id}`);
     }
-  };
-
-  // 내용 미리보기 (50자 이상이면 자르기)
-  const getContentPreview = (content) => {
-    if (!content) return "";
-    return content.length > 50 ? content.slice(0, 50) + "..." : content;
   };
 
   return (
@@ -27,7 +44,6 @@ export default function TodayStatus({ todayDiary }) {
         mb: 4,
         p: 3,
         borderRadius: 2,
-        backgroundColor: "#f9f9f9",
         boxShadow: 2,
         cursor: todayDiary ? "pointer" : "default",
         transition: "background-color 0.2s ease",
@@ -37,44 +53,90 @@ export default function TodayStatus({ todayDiary }) {
       }}
       onClick={todayDiary ? handleViewDiary : undefined}
     >
-      <Typography variant="h6" gutterBottom>
-        오늘의 일기 ({today})
-      </Typography>
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ mb: 2 }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: "bold",
+            color: "var(--color-primary)",
+          }}
+        >
+          오늘의 일기
+        </Typography>
+
+        {/* 날짜 - 회색 표시 */}
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: "#888",
+            fontWeight: "normal",
+          }}
+        >
+          {today}
+        </Typography>
+      </Box>
 
       {todayDiary ? (
-        <Box>
-          {/* 오늘의 기분 아이콘 (있을 때만 표시) */}
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          gap={3}
+          sx={{
+            flexWrap: "wrap",
+            mt: 2,
+          }}
+        >
+          {/* 오늘의 기분 아이콘 */}
           {todayDiary.mood && moodIcons[todayDiary.mood]?.color && (
-            <Box mb={1}>
+            <Box display="flex" alignItems="center" gap={1}>
               <img
                 src={moodIcons[todayDiary.mood].color}
                 alt="오늘의 기분"
-                width={80}
+                width={60}
                 height={60}
                 style={{ objectFit: "contain" }}
               />
+              <Typography
+                variant="body1"
+                sx={{ color: "var(--color-primary)", fontWeight: "bold" }}
+              >
+                {moodIcons[todayDiary.mood].ko} ({moodIcons[todayDiary.mood].en})
+              </Typography>
             </Box>
           )}
 
-          {/* === 오늘 일기 내용 미리보기 === */}
-          {todayDiary.content && (
-            <Typography
-              variant="body2"
-              sx={{
-                mt: 2,
-                px: 1,
-                color: "#333",
-                textAlign: "center",
-                whiteSpace: "pre-line", // 줄바꿈 유지
-              }}
-            >
-              {getContentPreview(todayDiary.content)}
-            </Typography>
+          {/* 오늘의 기분 점수 */}
+          {todayDiary.score && (
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: "var(--color-primary)",
+                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                기분 점수:
+                <FontAwesomeIcon
+                  icon={scoreIcons[todayDiary.score - 1]?.color || faFaceMeh}
+                  size="2x"
+                  style={{ color: "var(--color-primary)" }}
+                />
+              </Typography>
+            </Box>
           )}
         </Box>
       ) : (
-        <Box>
-          {/* 오늘 일기 쓰기 버튼 → /editor 경로 이동 */}
+        <Box sx={{ mt: 2 }}>
+          {/* 오늘 일기 쓰기 버튼 */}
           <Button
             component={Link}
             to="/editor"

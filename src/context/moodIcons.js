@@ -39,21 +39,21 @@ import compass from "../assets/compass.png";
 import B_compass from "../assets/B_compass.png";
 
 export const moodIcons = {
-  anxious: {
-    en: "Anxious",
+  anxiety: {
+    en: "Anxiety",
     ko: "불안",
     color: cloudRainSnow,
     gray: B_cloudRainSnow,
   },
-  down: {
-    en: "Down",
-    ko: "무기력",
+  coldness: {
+    en: "Coldness",
+    ko: "냉담",
     color: cloudCloud,
     gray: B_cloudCloud,
   },
-  numb: {
-    en: "Numb",
-    ko: "냉담",
+  lethargy: {
+    en: "Lethargy",
+    ko: "무기력",
     color: cloudSnow,
     gray: B_cloudSnow,
   },
@@ -63,32 +63,32 @@ export const moodIcons = {
     color: moonCloud,
     gray: B_moonCloud,
   },
-  relaxed: {
-    en: "Relaxed",
+  calm: {
+    en: "Calm",
     ko: "평온",
     color: moonStar,
     gray: B_moonStar,
   },
-  sad: {
-    en: "Sad",
+  sadness: {
+    en: "Sadness",
     ko: "슬픔",
     color: cloudRain,
     gray: B_cloudRain,
   },
-  protected: {
-    en: "Protected",
+  protection: {
+    en: "Protection",
     ko: "보호",
     color: umbrella,
     gray: B_umbrella,
   },
-  happy: {
-    en: "Happy",
+  happiness: {
+    en: "Happiness",
     ko: "행복",
     color: snow,
     gray: B_snow,
   },
-  hopeful: {
-    en: "Hopeful",
+  hope: {
+    en: "Hope",
     ko: "희망",
     color: leaf,
     gray: B_leaf,

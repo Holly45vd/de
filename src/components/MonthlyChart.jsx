@@ -63,7 +63,7 @@ export default function Recent30DaysChart() {
 
         // 그래프용 포맷
         const formatted = filtered.map((item) => ({
-          date: dayjs(item.date.toDate()).format("YYYY-MM-DD"),
+          date: dayjs(item.date.toDate()).format("MM-DD"),
           score: item.score || 0,
         }));
 
@@ -93,7 +93,7 @@ export default function Recent30DaysChart() {
       const filtered = snap.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
         .filter((item) => {
-          const itemDate = dayjs(item.date.toDate()).format("YYYY-MM-DD");
+          const itemDate = dayjs(item.date.toDate()).format("MM-DD");
           return itemDate === clickedDate;
         });
 
@@ -117,7 +117,6 @@ export default function Recent30DaysChart() {
         mt: 5,
         p: 2,
         borderRadius: 2,
-        backgroundColor: "#f9f9f9",
         boxShadow: 2,
       }}
     >
@@ -163,7 +162,7 @@ export default function Recent30DaysChart() {
                   <circle
                     cx={cx}
                     cy={cy}
-                    r={14} // 클릭 영역 확장
+                    r={14}
                     fill="transparent"
                     style={{ cursor: "pointer" }}
                     onClick={() => handleDotClick(payload.date)}
@@ -197,8 +196,24 @@ export default function Recent30DaysChart() {
           }}
         >
           {/* 모달 헤더 */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-            <Typography variant="h6">{selectedDate}</Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              mb: 2,
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{
+                color: "#888", // 날짜 회색
+                fontSize: "0.9rem", // 조금 작은 사이즈
+                fontWeight: "normal",
+              }}
+            >
+              {selectedDate}
+            </Typography>
             <IconButton onClick={() => setOpen(false)}>
               <CloseIcon />
             </IconButton>
@@ -222,7 +237,7 @@ export default function Recent30DaysChart() {
                     <img
                       src={moodIcons[diary.mood]?.color}
                       alt={diary.mood}
-                      style={{ width: 30, height: 30 }}
+                      style={{ width: 35, height: 30 }}
                     />
                     {/* 내용 20자 제한 */}
                     <Typography

@@ -1,12 +1,17 @@
 // src/components/PrivateRoute.jsx
-import { useContext } from "react";
+import React from "react";
 import { Navigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import LoadingSpinner from "./LoadingSpinner";
+import { useAuth } from "../context/AuthContext";
 
+/**
+ * 로그인 체크 후 로그인되어 있지 않으면 로그인 페이지로 리다이렉트
+ */
 export default function PrivateRoute({ children }) {
-  const { user, loading } = useContext(AuthContext);
+  const { currentUser } = useAuth();
 
-  if (loading) return <LoadingSpinner />;
-  return user ? children : <Navigate to="/login" replace />;
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 }

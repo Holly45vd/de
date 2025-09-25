@@ -59,8 +59,8 @@ export default function HomePage() {
     (diary) => dayjs(diary.date.toDate()).format("YYYY-MM-DD") === todayKey
   );
 
-  /** 최근 4개의 일기 */
-  const recentDiaries = diaries.slice(0, 4);
+  /** 최근 6개의 일기 */
+  const recentDiaries = diaries.slice(0, 6);
 
   return (
     <div className="container">
@@ -89,75 +89,82 @@ export default function HomePage() {
           <Grid container spacing={2}>
             {recentDiaries.map((diary) => {
               const contentPreview =
-                diary.content.length > 12
-                  ? diary.content.slice(0, 12) + "..."
+                diary.content.length > 30
+                  ? diary.content.slice(0, 30) + "..."
                   : diary.content;
 
               return (
-                <Grid item xs={6} md={3} key={diary.id}>
+                <Grid item xs={6} sm={4} md={2} key={diary.id}>
                   <Card
                     className="card"
                     onClick={() => navigate(`/diary/${diary.id}`)}
                     sx={{
+                      position: "relative",
                       cursor: "pointer",
-                      height: "100%",
+                      height: 180,
                       display: "flex",
                       flexDirection: "column",
-                      justifyContent: "space-between",
-                      "&:hover": { boxShadow: 4 },
+                      justifyContent: "center",
+                      alignItems: "center",
+                      textAlign: "center",
+                      overflow: "hidden",
+                      borderRadius: 2,
+                      "&:hover": { boxShadow: 6 },
+                      transition: "box-shadow 0.3s ease",
                     }}
                   >
                     <CardContent sx={{ p: 2 }}>
-                      {/* 상단: 아이콘 왼쪽 / 날짜 오른쪽 */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          mb: 1,
-                        }}
-                      >
-                        {/* 아이콘 */}
-                        {moodIcons[diary.mood]?.color ? (
-                          <img
-                            src={moodIcons[diary.mood].color}
-                            alt={diary.mood}
-                            width={40}
-                            height={40}
-                            style={{ objectFit: "contain" }}
-                          />
-                        ) : (
-                          <Typography fontSize={30}>📝</Typography>
-                        )}
+                      {/* 큰 아이콘 */}
+                      {moodIcons[diary.mood]?.color ? (
+                        <img
+                          src={moodIcons[diary.mood].color}
+                          alt={diary.mood}
+                          width={130}
+                          height={110}
+                          style={{ objectFit: "contain" }}
+                        />
+                      ) : (
+                        <Typography fontSize={40}>📝</Typography>
+                      )}
 
-                        {/* 날짜 */}
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ color: "#666", fontSize: "0.8rem" }}
-                        >
-                          {dayjs(diary.date?.toDate()).format("YYYY.MM.DD")}
-                        </Typography>
-                      </Box>
-
-                      {/* 내용 미리보기 */}
+                      {/* 날짜 */}
                       <Typography
-                        variant="body2"
+                        variant="subtitle2"
                         sx={{
+                          mt: 1,
+                          color: "#666",
                           fontSize: "0.9rem",
-                          color: "#333",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          lineHeight: 1.4,
-                          textAlign: "center",
-                          minHeight: "40px",
+                          fontWeight: "bold",
                         }}
                       >
-                        {contentPreview || "내용이 없습니다."}
+                        {dayjs(diary.date?.toDate()).format("MM.DD")}
                       </Typography>
                     </CardContent>
+
+                    {/* ===== 마우스 오버 시 내용 미리보기 ===== */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        width: "100%",
+                        bgcolor: "rgba(0,0,0,0.7)",
+                        color: "#fff",
+                        p: 1,
+                        opacity: 0,
+                        transform: "translateY(100%)",
+                        transition: "opacity 0.3s ease, transform 0.3s ease",
+                        fontSize: "0.85rem",
+                        lineHeight: 1.4,
+                        whiteSpace: "pre-line",
+                        "&:hover": {
+                          opacity: 1,
+                          transform: "translateY(0)",
+                        },
+                      }}
+                    >
+                      {contentPreview || "내용이 없습니다."}
+                    </Box>
                   </Card>
                 </Grid>
               );

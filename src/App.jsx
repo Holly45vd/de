@@ -16,6 +16,7 @@ import DiaryDetail from "./pages/DiaryDetail";
 import LoginPage from "./pages/LoginPage";
 import BottomNavMenu from "./components/BottomNavMenu";
 import MoodQuoteAdminPage from "./pages/MoodQuoteAdminPage";
+import PrivateRoute from "./components/PrivateRoute"; // 추가
 
 // ✅ MUI Theme 설정
 const theme = createTheme({
@@ -34,29 +35,86 @@ const theme = createTheme({
 
 export default function App() {
   return (
-  // src/App.jsx
-<Router>
-  <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <ThemeProvider theme={theme}>
-      <AuthProvider>
-        <div className="container">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/editor" element={<DiaryEditor />} />
-            <Route path="/diary/:id" element={<DiaryDetail />} />
-            <Route path="/diary/edit/:id" element={<DiaryEditor />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/admin" element={<MoodQuoteAdminPage />} />
-          </Routes>
-        </div>
-        <BottomNavMenu />
-      </AuthProvider>
-    </ThemeProvider>
-  </LocalizationProvider>
-</Router>
+    <Router>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <ThemeProvider theme={theme}>
+          <AuthProvider>
+            <div className="container">
+              <Routes>
+                {/* 로그인 없이 접근 가능 */}
+                <Route path="/login" element={<LoginPage />} />
 
+                {/* 로그인 필요 */}
+                <Route
+                  path="/"
+                  element={
+                    <PrivateRoute>
+                      <HomePage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/home"
+                  element={
+                    <PrivateRoute>
+                      <HomePage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/calendar"
+                  element={
+                    <PrivateRoute>
+                      <CalendarPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <PrivateRoute>
+                      <ProfilePage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/editor"
+                  element={
+                    <PrivateRoute>
+                      <DiaryEditor />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/diary/:id"
+                  element={
+                    <PrivateRoute>
+                      <DiaryDetail />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/diary/edit/:id"
+                  element={
+                    <PrivateRoute>
+                      <DiaryEditor />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <PrivateRoute>
+                      <MoodQuoteAdminPage />
+                    </PrivateRoute>
+                  }
+                />
+              </Routes>
+            </div>
+            <BottomNavMenu />
+          </AuthProvider>
+        </ThemeProvider>
+      </LocalizationProvider>
+    </Router>
   );
 }

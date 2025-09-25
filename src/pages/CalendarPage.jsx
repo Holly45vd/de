@@ -1,6 +1,6 @@
 // src/pages/CalendarPage.jsx
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Card, CardContent, Button } from "@mui/material";
+import { Box, Typography, Card, CardContent, Button, useMediaQuery } from "@mui/material";
 import Calendar from "react-calendar";
 import "../styles/calendar.css";
 import "react-calendar/dist/Calendar.css";
@@ -15,6 +15,7 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 export default function CalendarPage() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width:768px)");
 
   const [diaries, setDiaries] = useState([]);
   const [diariesByDate, setDiariesByDate] = useState({});
@@ -76,24 +77,28 @@ export default function CalendarPage() {
     if (view !== "month") return null;
     const dateKey = dayjs(date).format("YYYY-MM-DD");
 
-    if (diariesByDate[dateKey]) {
-      const moodKey = diariesByDate[dateKey];
-      return (
-        <div style={{ textAlign: "center", marginTop: "2px" }}>
+    const hasDiary = diariesByDate[dateKey];
+    return (
+      <div style={{ textAlign: "center", marginTop: "2px" }}>
+        {hasDiary ? (
           <img
-            src={moodIcons[moodKey]?.color}
-            alt={moodIcons[moodKey]?.ko}
+            src={moodIcons[hasDiary]?.color}
+            alt={moodIcons[hasDiary]?.ko}
             style={{
-              width: 32,
-              height: 28,
+              width: isMobile ? 30 : 60,
+              height: isMobile ? 26 : 54,
               margin: "0 auto",
+              display: "block",
               transition: "transform 0.2s",
             }}
           />
-        </div>
-      );
-    }
-    return null;
+        ) : (
+          <span style={{ fontSize: isMobile ? "0.7rem" : "0.9rem", color: "#333" }}>
+            {dayjs(date).date()}
+          </span>
+        )}
+      </div>
+    );
   };
 
   /** 일기 카드 클릭 → 상세 페이지 이동 */
@@ -103,7 +108,7 @@ export default function CalendarPage() {
     <Box
       sx={{
         p: 3,
-        maxWidth: 800,
+        maxWidth: isMobile ? 380 : 900,
         mx: "auto",
         textAlign: "center",
       }}
@@ -117,36 +122,44 @@ export default function CalendarPage() {
       </Typography>
 
       {/* ===== 캘린더 ===== */}
-      <Box sx={{ mb: 4 }}>
+      <Box
+        sx={{
+          mb: 4,
+          ".react-calendar": {
+            width: "100%",
+            maxWidth: isMobile ? "360px" : "900px",
+            fontSize: isMobile ? "0.8rem" : "1rem",
+            borderRadius: "12px",
+            padding: isMobile ? "5px" : "10px",
+          },
+          ".react-calendar__tile": {
+            flex: "1 0 calc(100% / 7)", // 한 줄에 정확히 7칸 유지
+            height: isMobile ? "50px" : "90px", // 모바일은 작게, PC는 크게
+            textAlign: "center",
+            borderRadius: "8px",
+            padding: "5px 0",
+            transition: "0.3s",
+            "&:hover": {
+              backgroundColor: "#f0f8ff",
+            },
+          },
+          ".react-calendar__tile--active": {
+            backgroundColor: "var(--color-primary)",
+            color: "#fff",
+          },
+        }}
+      >
         <Calendar
           locale="ko"
           value={dayjs(selectedDate).toDate()}
           onClickDay={handleDateClick}
           tileContent={renderTileContent}
-          formatDay={(locale, date) => dayjs(date).date().toString()}
-          tileClassName={({ date }) => {
-            const dateKey = dayjs(date).format("YYYY-MM-DD");
-            const todayKey = dayjs().format("YYYY-MM-DD");
-            if (dateKey === todayKey) return "today-highlight";
-            if (diariesByDate[dateKey]) return "has-diary";
-            return "";
-          }}
+          formatDay={() => ""} // 날짜 숫자는 숨김
         />
       </Box>
 
       {/* ===== 선택된 날짜의 일기 목록 ===== */}
       <Box sx={{ mt: 4 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            mb: 2,
-            fontWeight: "bold",
-            color: "var(--color-primary)",
-          }}
-        >
-          {selectedDate}의 일기
-        </Typography>
-
         {selectedDiaries.length > 0 ? (
           selectedDiaries.map((diary) => (
             <Card
@@ -160,16 +173,40 @@ export default function CalendarPage() {
               }}
             >
               <CardContent>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <img
-                    src={moodIcons[diary.mood]?.color}
-                    alt={moodIcons[diary.mood]?.ko}
-                    style={{ width: 30, height: 30 }}
-                  />
-                  <Typography variant="body1" sx={{ flexGrow: 1, textAlign: "left" }}>
-                    {diary.content.length > 20
-                      ? `${diary.content.slice(0, 20)}...`
-                      : diary.content}
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between" // 좌-우 배치
+                  sx={{ width: "100%" }}
+                >
+                  {/* 왼쪽: 아이콘 + 내용 */}
+                  <Box display="flex" alignItems="center" gap={1} sx={{ flex: 1 }}>
+                    <img
+                      src={moodIcons[diary.mood]?.color}
+                      alt={moodIcons[diary.mood]?.ko}
+                      style={{ width: 30, height: 30 }}
+                    />
+                    <Typography
+                      variant="body1"
+                      sx={{ flexGrow: 1, textAlign: "left", overflow: "hidden" }}
+                    >
+                      {diary.content.length > 20
+                        ? `${diary.content.slice(0, 20)}...`
+                        : diary.content}
+                    </Typography>
+                  </Box>
+
+                  {/* 오른쪽: 날짜 (MM-DD) */}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      minWidth: "60px",
+                      textAlign: "center",
+                      color: "#666",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {dayjs(diary.date.toDate()).format("MM-DD")}
                   </Typography>
                 </Box>
               </CardContent>
