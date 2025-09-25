@@ -52,84 +52,73 @@ export default function BottomNavMenu() {
         unmountOnExit
       >
         <Slide
-          direction="left"
-          in={open}
-          timeout={{ enter: 500, exit: 500 }}
-          easing={{
-            enter: "cubic-bezier(0.4, 0, 0.2, 1)", // 부드럽게 등장
-            exit: "cubic-bezier(0.4, 0, 0.2, 1)",  // 부드럽게 퇴장
-          }}
-        >
-          <Box
-            sx={{
-              position: "fixed",
-              bottom: 20,
-              right: 80,
-              display: "flex",
-              gap: 2,
-              transition: "all 0.3s ease",
+  direction="left"
+  in={open}
+  timeout={{ enter: 500, exit: 500 }}
+  easing={{
+    enter: "cubic-bezier(0.4, 0, 0.2, 1)",
+    exit: "cubic-bezier(0.4, 0, 0.2, 1)",
+  }}
+>
+  <Box
+    sx={{
+      position: "fixed",
+      bottom: 20,
+      right: 80,
+      display: "flex",
+      gap: 2,
+      padding: "8px 12px",
+      backgroundColor: "rgba(255, 255, 255, 0.6)", // 반투명 흰색
+      backdropFilter: "blur(8px)", // 흐림 효과
+      borderRadius: "12px",
+      boxShadow: "0 4px 10px rgba(0,0,0,0.1)", // 은은한 그림자
+      transition: "all 0.3s ease",
 
-              // 모든 IconButton 스타일 공통화
-              "& .MuiIconButton-root": {
-                backgroundColor: "transparent",
-                color: "#45C4B0",
-                borderRadius: "50%",
-                width: 50,
-                height: 50,
-                transition: "all 0.3s ease",
+      // 모든 IconButton 스타일 공통화
+      "& .MuiIconButton-root": {
+        backgroundColor: "transparent",
+        color: "#45C4B0",
+        borderRadius: "50%",
+        width: 50,
+        height: 50,
+        transition: "all 0.3s ease",
+        "&:hover": {
+          backgroundColor: "#45C4B0",
+          color: "#fff",
+        },
+      },
+    }}
+  >
+    {/* 홈 */}
+    <IconButton component={Link} to="/" sx={{ flexDirection: "column" }}>
+      <HomeIcon />
+    </IconButton>
 
-                "&:hover": {
-                  backgroundColor: "#45C4B0",
-                  color: "#fff",
-                },
-              },
-            }}
-          >
-            {/* 홈 */}
-            <IconButton component={Link} to="/" sx={{ flexDirection: "column" }}>
-              <HomeIcon />
-            </IconButton>
+    {/* 캘린더 */}
+    <IconButton component={Link} to="/calendar" sx={{ flexDirection: "column" }}>
+      <CalendarMonthIcon />
+    </IconButton>
 
-            {/* 캘린더 */}
-            <IconButton
-              component={Link}
-              to="/calendar"
-              sx={{ flexDirection: "column" }}
-            >
-              <CalendarMonthIcon />
-            </IconButton>
+    {/* 새 일기 작성 */}
+    {currentUser && (
+      <IconButton component={Link} to="/editor" sx={{ flexDirection: "column" }}>
+        <EditNoteIcon />
+      </IconButton>
+    )}
 
-            {/* 새 일기 작성 */}
-            {currentUser && (
-              <IconButton
-                component={Link}
-                to="/editor"
-                sx={{ flexDirection: "column" }}
-              >
-                <EditNoteIcon />
-              </IconButton>
-            )}
+    {/* 프로필 / 로그인 */}
+    {currentUser ? (
+      <IconButton component={Link} to="/profile" sx={{ flexDirection: "column" }}>
+        <AccountCircleIcon />
+      </IconButton>
+    ) : (
+      <IconButton component={Link} to="/login" sx={{ flexDirection: "column" }}>
+        <AccountCircleIcon />
+      </IconButton>
+    )}
+  </Box>
+</Slide>
 
-            {/* 프로필 / 로그인 */}
-            {currentUser ? (
-              <IconButton
-                component={Link}
-                to="/profile"
-                sx={{ flexDirection: "column" }}
-              >
-                <AccountCircleIcon />
-              </IconButton>
-            ) : (
-              <IconButton
-                component={Link}
-                to="/login"
-                sx={{ flexDirection: "column" }}
-              >
-                <AccountCircleIcon />
-              </IconButton>
-            )}
-          </Box>
-        </Slide>
       </Fade>
     </Box>
   );

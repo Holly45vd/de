@@ -14,6 +14,7 @@ import DiaryEditor from "./pages/DiaryEditor";
 import DiaryDetail from "./pages/DiaryDetail";
 import LoginPage from "./pages/LoginPage"; // ✅ 로그인 페이지 추가
 import BottomNavMenu from "./components/BottomNavMenu";
+import MoodQuoteAdminPage from "./pages/MoodQuoteAdminPage";
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/diary/:id" element={<DiaryDetail />} />
             <Route path="/diary/edit/:id" element={<DiaryEditor />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/admin" element={<MoodQuoteAdminPage />} />
           </Routes>
            <BottomNavMenu />
         </AuthProvider>

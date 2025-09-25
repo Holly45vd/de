@@ -1,0 +1,9 @@
+/* src/styles/diary.css */
+
+.diary-content {
+  font-family: 'Hi Melody', 'Gaegu', cursive;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #444;
+  white-space: pre-line; /* 줄바꿈 유지 */
+}

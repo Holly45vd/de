@@ -79,47 +79,31 @@ export default function CalendarPage() {
   };
 
   // ✅ 캘린더 타일 표시
-  const renderTileContent = ({ date, view }) => {
-    if (view !== "month") return null;
-    const dateKey = dayjs(date).format("YYYY-MM-DD");
+ const renderTileContent = ({ date, view }) => {
+  if (view !== "month") return null;
+  const dateKey = dayjs(date).format("YYYY-MM-DD");
 
-    // 해당 날짜에 일기가 있으면 날짜 대신 아이콘 크게 표시
-    if (diariesByDate[dateKey]) {
-      return (
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "2px",
-          }}
-        >
-          <img
-            src={moodIcons[diariesByDate[dateKey]]?.color}
-            alt="mood"
-            style={{
-              width: 40,
-              height: 32,
-              display: "block",
-              margin: "0 auto",
-            }}
-          />
-        </div>
-      );
-    }
-
-    // 없으면 기본 날짜 표시 유지
+  // 해당 날짜에 일기가 있으면 아이콘만 표시
+  if (diariesByDate[dateKey]) {
     return (
-      <div
-        style={{
-          fontSize: "0.9rem",
-          textAlign: "center",
-          marginTop: "4px",
-          color: "#333",
-        }}
-      >
-        {date.getDate()}
+      <div style={{ textAlign: "center", marginTop: "2px" }}>
+        <img
+          src={moodIcons[diariesByDate[dateKey]]?.color}
+          alt="mood"
+          style={{
+            width: 40,
+            height: 32,
+            display: "block",
+            margin: "0 auto",
+          }}
+        />
       </div>
     );
-  };
+  }
+
+  return null; // 숫자 대신 아무것도 안 표시
+};
+
 
   const handleCardClick = (id) => {
     navigate(`/diary/${id}`);
@@ -132,16 +116,26 @@ export default function CalendarPage() {
       </Typography>
 
       {/* 캘린더 */}
-      <Calendar
-        locale="ko"
-        value={dayjs(selectedDate).toDate()}
-        onClickDay={handleDateClick}
-        tileContent={renderTileContent}
-        tileClassName={({ date }) => {
-          const dateKey = dayjs(date).format("YYYY-MM-DD");
-          return diariesByDate[dateKey] ? "has-diary" : "";
-        }}
-      />
+<Calendar
+  locale="ko"
+  value={dayjs(selectedDate).toDate()}
+  onClickDay={handleDateClick}
+  tileContent={renderTileContent}
+  formatDay={(locale, date) => {
+    const dateKey = dayjs(date).format("YYYY-MM-DD");
+    return diariesByDate[dateKey] ? "" : dayjs(date).date().toString();
+  }}
+  tileClassName={({ date }) => {
+    const dateKey = dayjs(date).format("YYYY-MM-DD");
+    const todayKey = dayjs().format("YYYY-MM-DD");
+
+    if (dateKey === todayKey) return "today-highlight"; // 오늘 날짜 스타일
+    if (diariesByDate[dateKey]) return "has-diary";
+    return "";
+  }}
+/>
+
+
 
       {/* 선택된 날짜의 일기 목록 */}
       <Box sx={{ mt: 4, maxWidth: 500, mx: "auto" }}>
@@ -165,22 +159,19 @@ export default function CalendarPage() {
               onClick={() => handleCardClick(diary.id)}
             >
               <CardContent>
-                {/* 감정 아이콘 + 점수 */}
                 <Box display="flex" alignItems="center" gap={1}>
                   <img
                     src={moodIcons[diary.mood]?.color}
                     alt={diary.mood}
                     style={{ width: 30, height: 30 }}
                   />
-                  <Typography variant="body2"> 여기에 기분 아이콘이 들어가야하는데 </Typography>
-                </Box>
-
-                {/* 내용 */}
-                <Typography variant="body1" sx={{ mt: 1 }}>
+                 <Typography variant="body1" sx={{ mt: 1 }}>
                   {diary.content.length > 20
                     ? `${diary.content.slice(0, 20)}...`
                     : diary.content}
                 </Typography>
+                </Box>
+
               </CardContent>
             </Card>
           ))

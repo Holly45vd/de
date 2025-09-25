@@ -9,28 +9,53 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  /** 로그인 또는 회원가입 처리 */
   const handleSubmit = async () => {
+    if (!email || !password) {
+      alert("이메일과 비밀번호를 입력해주세요.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
       if (isSignUp) {
+        // 회원가입 → 랜덤 닉네임 Firestore에 저장
         await signUp(email, password);
-        alert("회원가입 성공!");
+        alert("회원가입 성공! 로그인 후 닉네임을 수정할 수 있습니다.");
       } else {
+        // 로그인
         await login(email, password);
         alert("로그인 성공!");
       }
-      navigate("/home");
+      navigate("/home"); // 로그인 후 홈으로 이동
     } catch (error) {
       alert("오류 발생: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box sx={{ maxWidth: 400, mx: "auto", mt: 8 }}>
+    <Box
+      sx={{
+        maxWidth: 400,
+        mx: "auto",
+        mt: 8,
+        p: 3,
+        borderRadius: 2,
+        boxShadow: 3,
+        backgroundColor: "#f9f9f9",
+      }}
+    >
+      {/* 제목 */}
       <Typography variant="h5" mb={2} textAlign="center">
         {isSignUp ? "회원가입" : "로그인"}
       </Typography>
 
+      {/* 이메일 입력 */}
       <TextField
         label="이메일"
         fullWidth
@@ -38,6 +63,8 @@ export default function LoginPage() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
+
+      {/* 비밀번호 입력 */}
       <TextField
         label="비밀번호"
         type="password"
@@ -47,15 +74,22 @@ export default function LoginPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
 
+      {/* 제출 버튼 */}
       <Button
         variant="contained"
         fullWidth
-        sx={{ mt: 2 }}
+        sx={{
+          mt: 2,
+          backgroundColor: "#45C4B0",
+          "&:hover": { backgroundColor: "#38a99a" },
+        }}
         onClick={handleSubmit}
+        disabled={loading}
       >
-        {isSignUp ? "회원가입" : "로그인"}
+        {loading ? "처리중..." : isSignUp ? "회원가입" : "로그인"}
       </Button>
 
+      {/* 회원가입/로그인 전환 버튼 */}
       <Button
         variant="text"
         fullWidth
