@@ -113,7 +113,8 @@ export default function App() {
             </div>
             <BottomNavMenu />
           </AuthProvider>
-        </ThemeProvider>
+        </ThemeProvider>npm install gh-pages --save-dev
+
       </LocalizationProvider>
     </Router>
   );
