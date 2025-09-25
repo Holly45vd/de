@@ -119,8 +119,8 @@ export default function HomePage() {
                         <img
                           src={moodIcons[diary.mood].color}
                           alt={diary.mood}
-                          width={130}
-                          height={110}
+                          width={100}
+                          height={90}
                           style={{ objectFit: "contain" }}
                         />
                       ) : (

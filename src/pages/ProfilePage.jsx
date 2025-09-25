@@ -55,6 +55,7 @@ export default function ProfilePage() {
       if (!currentUser?.uid) return;
 
       try {
+        // 유저 정보 가져오기
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
 
@@ -64,6 +65,7 @@ export default function ProfilePage() {
           setSelectedAvatar(userData.avatar || null);
         }
 
+        // 일기 데이터 가져오기
         const q = query(
           collection(db, "diaries"),
           where("userId", "==", currentUser.uid)
@@ -90,6 +92,7 @@ export default function ProfilePage() {
     fetchData();
   }, [currentUser]);
 
+  /** 닉네임 저장 */
   const handleNicknameSave = async () => {
     if (!currentUser?.uid) return;
     try {
@@ -111,6 +114,7 @@ export default function ProfilePage() {
     }
   };
 
+  /** 아바타 변경 */
   const handleAvatarSelect = async (icon) => {
     if (!currentUser?.uid) return;
     try {
@@ -131,6 +135,7 @@ export default function ProfilePage() {
     }
   };
 
+  /** 비밀번호 변경 */
   const handlePasswordChange = async () => {
     if (!newPassword || newPassword.length < 6) {
       alert("비밀번호는 6자리 이상이어야 합니다.");
@@ -150,6 +155,7 @@ export default function ProfilePage() {
     }
   };
 
+  /** 로그아웃 */
   const handleLogout = async () => {
     try {
       await logout();
@@ -164,7 +170,17 @@ export default function ProfilePage() {
   return (
     <div className="container">
       <Box sx={{ mt: 5 }}>
-        <Card className="card" sx={{ mb: 4, textAlign: "center" }}>
+        {/* 상단 프로필 박스 */}
+        <Card
+          sx={{
+            mb: 4,
+            textAlign: "center",
+            boxShadow: "none", // 그림자 제거
+            backgroundColor: "#E0F7F5", // 민트색
+            borderRadius: 2,
+            p: 2,
+          }}
+        >
           <CardContent>
             <Box sx={{ position: "relative", display: "inline-block" }}>
               <Avatar
@@ -203,6 +219,7 @@ export default function ProfilePage() {
               </IconButton>
             </Box>
 
+            {/* 닉네임 */}
             <Box
               sx={{
                 mt: 2,
@@ -219,10 +236,7 @@ export default function ProfilePage() {
                     onChange={(e) => setNickname(e.target.value)}
                     sx={{ mr: 1 }}
                   />
-                  <IconButton
-                    className="btn-primary"
-                    onClick={handleNicknameSave}
-                  >
+                  <IconButton className="btn-primary" onClick={handleNicknameSave}>
                     <EditIcon />
                   </IconButton>
                 </>
@@ -241,6 +255,7 @@ export default function ProfilePage() {
               )}
             </Box>
 
+            {/* 비밀번호 변경 */}
             <Box sx={{ mt: 3, mb: 2 }}>
               {!showPasswordInput ? (
                 <Button
@@ -273,33 +288,34 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={6}>
-            <Card className="card" sx={{ textAlign: "center", py: 2 }}>
-              <Typography variant="subtitle2">전체 나의 일기</Typography>
-              <Typography variant="h6">{diaryCount}</Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={6}>
-            <Card className="card" sx={{ textAlign: "center", py: 2 }}>
-              <Typography variant="subtitle2">평균 기분 점수</Typography>
-              <Typography variant="h6">{averageScore}</Typography>
-            </Card>
-          </Grid>
-        </Grid>
+        
 
-        <Button component={Link} to="/calendar" className="btn-outline" fullWidth sx={{ mb: 2 }}>
+        {/* 하단 버튼 */}
+        <Button
+          component={Link}
+          to="/calendar"
+          className="btn-outline"
+          fullWidth
+          sx={{ mb: 2 }}
+        >
           내 일기 보러가기
         </Button>
 
-        <Button component={Link} to="/admin" className="btn-outline" fullWidth sx={{ mb: 2 }}>
-          문구 추가하기
+        <Button
+          component={Link}
+          to="/admin"
+          className="btn-outline"
+          fullWidth
+          sx={{ mb: 2 }}
+        >
+          자동 문구 추가하기
         </Button>
 
         <Button className="btn-primary" fullWidth onClick={handleLogout}>
           로그아웃
         </Button>
 
+        {/* 아바타 선택 모달 */}
         <Modal open={avatarModalOpen} onClose={() => setAvatarModalOpen(false)}>
           <Box
             sx={{
@@ -334,7 +350,11 @@ export default function ProfilePage() {
                     }}
                     onClick={() => handleAvatarSelect(icon)}
                   >
-                    <FontAwesomeIcon icon={icon} size="2x" color="var(--color-primary)" />
+                    <FontAwesomeIcon
+                      icon={icon}
+                      size="2x"
+                      color="var(--color-primary)"
+                    />
                   </Box>
                 </Grid>
               ))}

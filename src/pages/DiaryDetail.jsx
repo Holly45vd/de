@@ -123,19 +123,19 @@ export default function DiaryDetail() {
       <img
         src={moodIconData.color}
         alt={diary.mood}
-        style={{ width: 80, height: 65 }}
+        style={{ width: 75, height: 65 }}
       />
       <Typography
         variant="body1"
         sx={{ color: "var(--color-primary)", fontWeight: "bold" }}
       >
-        {moodIconData.ko} ({moodIconData.en})
+        {moodIconData.ko}({moodIconData.en})
       </Typography>
     </Box>
   )}
 
   {/* 기분 점수 (아이콘 + 숫자) */}
-  <Box display="flex" alignItems="center" gap={1}>
+  <Box display="flex" alignItems="center" gap={0}>
     <FontAwesomeIcon
       icon={scoreIcons[diary.score - 1]?.color || faFaceMeh}
       size="2x"
@@ -143,6 +143,7 @@ export default function DiaryDetail() {
     />
     <Typography
       variant="body1"
+      size="2x"
       sx={{ color: "var(--color-primary)", fontWeight: "bold" }}
     >
       {diary.score} 점
