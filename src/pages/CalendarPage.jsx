@@ -21,17 +21,13 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [selectedDiaries, setSelectedDiaries] = useState([]);
 
-  // ✅ 파이어스토어에서 일기 데이터 불러오기
+  /** Firestore에서 일기 불러오기 */
   useEffect(() => {
     const fetchDiaries = async () => {
       if (!currentUser?.uid) return;
 
       try {
-        const q = query(
-          collection(db, "diaries"),
-          where("userId", "==", currentUser.uid)
-        );
-
+        const q = query(collection(db, "diaries"), where("userId", "==", currentUser.uid));
         const snap = await getDocs(q);
         const allDiaries = [];
         const byDate = {};
@@ -42,7 +38,6 @@ export default function CalendarPage() {
           allDiaries.push(diary);
 
           const dateKey = dayjs(data.date.toDate()).format("YYYY-MM-DD");
-          // 같은 날짜에 여러 개가 있어도 하나의 아이콘만 표시
           if (!byDate[dateKey]) {
             byDate[dateKey] = data.mood;
           }
@@ -51,13 +46,14 @@ export default function CalendarPage() {
         setDiaries(allDiaries);
         setDiariesByDate(byDate);
 
-        // 오늘 날짜 초기값 설정
+        // 오늘 날짜 초기값
         const todayKey = dayjs().format("YYYY-MM-DD");
-        const todayDiaries = allDiaries.filter(
-          (diary) => dayjs(diary.date.toDate()).format("YYYY-MM-DD") === todayKey
-        );
-        setSelectedDiaries(todayDiaries);
         setSelectedDate(todayKey);
+        setSelectedDiaries(
+          allDiaries.filter(
+            (d) => dayjs(d.date.toDate()).format("YYYY-MM-DD") === todayKey
+          )
+        );
       } catch (error) {
         console.error("캘린더 데이터 불러오기 오류:", error);
       }
@@ -66,112 +62,116 @@ export default function CalendarPage() {
     fetchDiaries();
   }, [currentUser]);
 
-  // ✅ 날짜 클릭 시 해당 날짜의 일기 목록 표시
+  /** 날짜 클릭 시 해당 날짜의 일기만 필터링 */
   const handleDateClick = (date) => {
     const dateKey = dayjs(date).format("YYYY-MM-DD");
     setSelectedDate(dateKey);
-
-    const filtered = diaries.filter(
-      (diary) => dayjs(diary.date.toDate()).format("YYYY-MM-DD") === dateKey
+    setSelectedDiaries(
+      diaries.filter((d) => dayjs(d.date.toDate()).format("YYYY-MM-DD") === dateKey)
     );
-
-    setSelectedDiaries(filtered);
   };
 
-  // ✅ 캘린더 타일 표시
- const renderTileContent = ({ date, view }) => {
-  if (view !== "month") return null;
-  const dateKey = dayjs(date).format("YYYY-MM-DD");
+  /** 달력 안에 감정 아이콘 표시 */
+  const renderTileContent = ({ date, view }) => {
+    if (view !== "month") return null;
+    const dateKey = dayjs(date).format("YYYY-MM-DD");
 
-  // 해당 날짜에 일기가 있으면 아이콘만 표시
-  if (diariesByDate[dateKey]) {
-    return (
-      <div style={{ textAlign: "center", marginTop: "2px" }}>
-        <img
-          src={moodIcons[diariesByDate[dateKey]]?.color}
-          alt="mood"
-          style={{
-            width: 40,
-            height: 32,
-            display: "block",
-            margin: "0 auto",
-          }}
-        />
-      </div>
-    );
-  }
-
-  return null; // 숫자 대신 아무것도 안 표시
-};
-
-
-  const handleCardClick = (id) => {
-    navigate(`/diary/${id}`);
+    if (diariesByDate[dateKey]) {
+      const moodKey = diariesByDate[dateKey];
+      return (
+        <div style={{ textAlign: "center", marginTop: "2px" }}>
+          <img
+            src={moodIcons[moodKey]?.color}
+            alt={moodIcons[moodKey]?.ko}
+            style={{
+              width: 32,
+              height: 28,
+              margin: "0 auto",
+              transition: "transform 0.2s",
+            }}
+          />
+        </div>
+      );
+    }
+    return null;
   };
+
+  /** 일기 카드 클릭 → 상세 페이지 이동 */
+  const handleCardClick = (id) => navigate(`/diary/${id}`);
 
   return (
-    <Box sx={{ p: 2, mt:2, textAlign: "center" }}>
-      <Typography variant="h5" mb={2}>
+    <Box
+      sx={{
+        p: 3,
+        maxWidth: 800,
+        mx: "auto",
+        textAlign: "center",
+      }}
+    >
+      <Typography
+        variant="h5"
+        mb={3}
+        sx={{ fontWeight: "bold", color: "var(--color-primary)" }}
+      >
         캘린더
       </Typography>
 
-      {/* 캘린더 */}
-<Calendar
-  locale="ko"
-  value={dayjs(selectedDate).toDate()}
-  onClickDay={handleDateClick}
-  tileContent={renderTileContent}
-  formatDay={(locale, date) => {
-    const dateKey = dayjs(date).format("YYYY-MM-DD");
-    return diariesByDate[dateKey] ? "" : dayjs(date).date().toString();
-  }}
-  tileClassName={({ date }) => {
-    const dateKey = dayjs(date).format("YYYY-MM-DD");
-    const todayKey = dayjs().format("YYYY-MM-DD");
+      {/* ===== 캘린더 ===== */}
+      <Box sx={{ mb: 4 }}>
+        <Calendar
+          locale="ko"
+          value={dayjs(selectedDate).toDate()}
+          onClickDay={handleDateClick}
+          tileContent={renderTileContent}
+          formatDay={(locale, date) => dayjs(date).date().toString()}
+          tileClassName={({ date }) => {
+            const dateKey = dayjs(date).format("YYYY-MM-DD");
+            const todayKey = dayjs().format("YYYY-MM-DD");
+            if (dateKey === todayKey) return "today-highlight";
+            if (diariesByDate[dateKey]) return "has-diary";
+            return "";
+          }}
+        />
+      </Box>
 
-    if (dateKey === todayKey) return "today-highlight"; // 오늘 날짜 스타일
-    if (diariesByDate[dateKey]) return "has-diary";
-    return "";
-  }}
-/>
-
-
-
-      {/* 선택된 날짜의 일기 목록 */}
-      <Box sx={{ mt: 4, maxWidth: 500, mx: "auto" }}>
-        {selectedDate && (
-          <Typography variant="h6" mb={2}>
-            {selectedDate}의 일기
-          </Typography>
-        )}
+      {/* ===== 선택된 날짜의 일기 목록 ===== */}
+      <Box sx={{ mt: 4 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            mb: 2,
+            fontWeight: "bold",
+            color: "var(--color-primary)",
+          }}
+        >
+          {selectedDate}의 일기
+        </Typography>
 
         {selectedDiaries.length > 0 ? (
           selectedDiaries.map((diary) => (
             <Card
               key={diary.id}
+              className="card"
+              onClick={() => handleCardClick(diary.id)}
               sx={{
                 mb: 2,
-                backgroundColor: "#f9f9f9",
                 cursor: "pointer",
-                transition: "0.3s",
-                "&:hover": { backgroundColor: "#e6f7ff" },
+                "&:hover": { boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" },
               }}
-              onClick={() => handleCardClick(diary.id)}
             >
               <CardContent>
                 <Box display="flex" alignItems="center" gap={1}>
                   <img
                     src={moodIcons[diary.mood]?.color}
-                    alt={diary.mood}
+                    alt={moodIcons[diary.mood]?.ko}
                     style={{ width: 30, height: 30 }}
                   />
-                 <Typography variant="body1" sx={{ mt: 1 }}>
-                  {diary.content.length > 20
-                    ? `${diary.content.slice(0, 20)}...`
-                    : diary.content}
-                </Typography>
+                  <Typography variant="body1" sx={{ flexGrow: 1, textAlign: "left" }}>
+                    {diary.content.length > 20
+                      ? `${diary.content.slice(0, 20)}...`
+                      : diary.content}
+                  </Typography>
                 </Box>
-
               </CardContent>
             </Card>
           ))
@@ -182,21 +182,10 @@ export default function CalendarPage() {
                 ? "오늘 작성된 일기가 없습니다."
                 : "이 날짜에는 작성된 일기가 없습니다."}
             </Typography>
-
-            {/* 새 일기 쓰기 버튼 */}
             <Button
-              variant="contained"
+              className="btn-primary"
               startIcon={<EditNoteIcon />}
               onClick={() => navigate("/editor")}
-              sx={{
-                backgroundColor: "#45C4B0",
-                color: "#fff",
-                fontWeight: "bold",
-                px: 3,
-                "&:hover": {
-                  backgroundColor: "#3ca896",
-                },
-              }}
             >
               새 일기 쓰기
             </Button>

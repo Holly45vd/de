@@ -17,20 +17,17 @@ export default function LoginPage() {
       alert("이메일과 비밀번호를 입력해주세요.");
       return;
     }
-
     setLoading(true);
 
     try {
       if (isSignUp) {
-        // 회원가입 → 랜덤 닉네임 Firestore에 저장
         await signUp(email, password);
         alert("회원가입 성공! 로그인 후 닉네임을 수정할 수 있습니다.");
       } else {
-        // 로그인
         await login(email, password);
         alert("로그인 성공!");
       }
-      navigate("/home"); // 로그인 후 홈으로 이동
+      navigate("/home");
     } catch (error) {
       alert("오류 발생: " + error.message);
     } finally {
@@ -47,7 +44,7 @@ export default function LoginPage() {
         p: 3,
         borderRadius: 2,
         boxShadow: 3,
-        backgroundColor: "#f9f9f9",
+        backgroundColor: "#fff",
       }}
     >
       {/* 제목 */}
@@ -76,23 +73,19 @@ export default function LoginPage() {
 
       {/* 제출 버튼 */}
       <Button
-        variant="contained"
         fullWidth
-        sx={{
-          mt: 2,
-          backgroundColor: "#45C4B0",
-          "&:hover": { backgroundColor: "#38a99a" },
-        }}
+        className="btn-primary"
+        sx={{ mt: 2 }}
         onClick={handleSubmit}
         disabled={loading}
       >
         {loading ? "처리중..." : isSignUp ? "회원가입" : "로그인"}
       </Button>
 
-      {/* 회원가입/로그인 전환 버튼 */}
+      {/* 전환 버튼 */}
       <Button
-        variant="text"
         fullWidth
+        className="btn-outline"
         sx={{ mt: 1 }}
         onClick={() => setIsSignUp(!isSignUp)}
       >

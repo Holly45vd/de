@@ -21,16 +21,14 @@ export default function MoodQuoteAdminPage() {
   const [selectedMood, setSelectedMood] = useState("");
   const [quotes, setQuotes] = useState([""]);
 
-  // 문구 추가 입력창
-  const addQuoteField = () => {
-    setQuotes([...quotes, ""]);
-  };
+  // 문구 입력 필드 추가
+  const addQuoteField = () => setQuotes([...quotes, ""]);
 
   // 문구 입력값 업데이트
   const handleQuoteChange = (index, value) => {
-    const updatedQuotes = [...quotes];
-    updatedQuotes[index] = value;
-    setQuotes(updatedQuotes);
+    const updated = [...quotes];
+    updated[index] = value;
+    setQuotes(updated);
   };
 
   // Firestore 저장
@@ -43,10 +41,10 @@ export default function MoodQuoteAdminPage() {
     try {
       await setDoc(doc(db, "moodQuotes", selectedMood), {
         mood: moods.find((m) => m.id === selectedMood).label,
-        quotes: quotes.filter((q) => q.trim() !== ""), // 공백 제거
+        quotes: quotes.filter((q) => q.trim() !== ""),
       });
-      alert("데이터가 성공적으로 저장되었습니다!");
-      setQuotes([""]); // 초기화
+      alert("데이터가 저장되었습니다!");
+      setQuotes([""]);
     } catch (error) {
       console.error("저장 실패:", error.message);
       alert("저장 중 오류가 발생했습니다.");
@@ -87,21 +85,11 @@ export default function MoodQuoteAdminPage() {
         />
       ))}
 
-      <Button
-        variant="outlined"
-        onClick={addQuoteField}
-        sx={{ mb: 2 }}
-      >
+      <Button className="btn-outline" onClick={addQuoteField} sx={{ mb: 2 }}>
         + 문구 추가
       </Button>
 
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleSave}
-        fullWidth
-        sx={{ backgroundColor: "#45C4B0", "&:hover": { backgroundColor: "#38a99a" } }}
-      >
+      <Button className="btn-primary" onClick={handleSave} fullWidth>
         Firestore에 저장
       </Button>
     </Box>

@@ -1,101 +1,127 @@
-/* ✅ Google Fonts 반드시 최상단에 위치 */
-@import url('https://fonts.googleapis.com/css2?family=Gaegu&family=Hi+Melody&family=Orbit&family=ZCOOL+KuaiLe&display=swap');
+/* === Google Fonts === */
+@import url('https://fonts.googleapis.com/css2?family=Gaegu&family=Hi+Melody&family=Orbit&display=swap');
 
+/* === 글로벌 변수 === */
 :root {
-  /* === 전역 폰트 설정 === */
-  --main-font: 'Orbit', 'Hi Melody', 'Gaegu', 'ZCOOL KuaiLe', sans-serif;
-  --diary-font: 'Hi Melody', 'Gaegu', cursive;
+  --color-primary: #45C4B0; /* 기본 민트 */
+  --color-primary-hover: #3ca896; /* hover 민트 */
+  --color-bg: #ffffff;
+  --color-text: #333;
+  --color-text-light: #777;
 
-  /* === 색상 및 UI 기본값 === */
-  --primary-color: #45C4B0;
-  --background-color: #ffffff;
-  --text-color: #333;
+  --font-main: 'Orbit', 'Hi Melody', 'Gaegu', sans-serif;
+  --font-diary: 'Hi Melody', 'Gaegu', cursive;
 
-  font-family: var(--main-font);
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: var(--text-color);
-  background-color: var(--background-color);
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --border-radius: 12px;
+  --transition-speed: 0.3s;
 }
 
-/* === 링크 스타일 === */
-a {
-  font-weight: 500;
-  color: #45C4B0;
-  text-decoration: none;
-}
-a:hover {
-  color: #3ca896;
-}
-
-/* === 바디 기본값 === */
-body {
+/* === 기본 세팅 === */
+* {
   margin: 0;
   padding: 0;
-  display: flex;
-  place-items: center;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  font-weight: 400;
   min-width: 320px;
   min-height: 100vh;
-  font-family: var(--main-font);
-  background-color: var(--background-color);
-  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
 }
 
-/* === 제목 스타일 === */
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-  font-family: var(--main-font);
-}
-
-/* === 버튼 기본 스타일 === */
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+/* === 공통 링크 === */
+a {
   font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  color: #fff;
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-speed);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+/* === 버튼 통일 === */
+button,
+.btn {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.25s, background-color 0.25s;
-}
-button:hover {
-  border-color: var(--primary-color);
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto var(--primary-color);
+  transition: background var(--transition-speed), color var(--transition-speed);
 }
 
-/* === 라이트 모드 === */
-@media (prefers-color-scheme: light) {
-  :root {
-    color: var(--text-color);
-    background-color: var(--background-color);
-  }
-  a:hover {
-    color: #3ca896;
-  }
-  button {
-    background-color: #f9f9f9;
-    color: var(--text-color);
-  }
+button.primary,
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border: 1px solid var(--color-primary);
 }
 
-/* === 일기 본문 전용 폰트 === */
+button.primary:hover,
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+button.outline,
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+button.outline:hover,
+.btn-outline:hover {
+  background: rgba(69, 196, 176, 0.05);
+  border-color: var(--color-primary-hover);
+  color: var(--color-primary-hover);
+}
+
+/* === 카드 통일 === */
+.card {
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  background-color: #f0faf8;
+}
+
+/* === 일기 본문 전용 === */
 .diary-content {
-  font-family: var(--diary-font);
+  font-family: var(--font-diary);
   font-size: 1.1rem;
   line-height: 1.8;
   color: #444;
   white-space: pre-line;
+}
+.container {
+  width: 100%;
+  max-width: 1200px; /* PC에서 최대 1200px */
+  margin: 0 auto;
+  padding: 16px; /* 양쪽 패딩 */
+  box-sizing: border-box;
+}
+
+/* === 반응형 === */
+@media (max-width: 768px) {
+  body {
+    padding: 0 1rem;
+  }
+  .container {
+    padding: 12px;
+  }
 }

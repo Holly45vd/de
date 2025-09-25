@@ -1,4 +1,6 @@
 // src/context/moodIcons.js
+
+// ===== 기존 아이콘 =====
 import cloudRainSnow from "../assets/cloudrainsnow.png";
 import B_cloudRainSnow from "../assets/B_cloudrainsnow.png";
 
@@ -29,15 +31,84 @@ import B_leaf from "../assets/B_leaf.png";
 import tree from "../assets/tree.png";
 import B_tree from "../assets/B_tree.png";
 
+// ===== 새로 추가할 아이콘 =====
+import glosses from "../assets/glosses.png";
+import B_glosses from "../assets/B_glosses.png";
+
+import compass from "../assets/compass.png";
+import B_compass from "../assets/B_compass.png";
+
 export const moodIcons = {
-  "anxious 불안": { color: cloudRainSnow, gray: B_cloudRainSnow },
-  "down 무기력": { color: cloudCloud, gray: B_cloudCloud },
-  "numb 냉담": { color: cloudSnow, gray: B_cloudSnow },
-  "lonely 외로움": { color: moonCloud, gray: B_moonCloud },
-  "relaxed 평온": { color: moonStar, gray: B_moonStar },
-  "sad 슬픔": { color: cloudRain, gray: B_cloudRain },
-  "protected 보호": { color: umbrella, gray: B_umbrella },
-  "happy 행복": { color: snow, gray: B_snow },
-  "hopeful 희망": { color: leaf, gray: B_leaf },
-  "growth 성장": { color: tree, gray: B_tree },
+  anxious: {
+    en: "Anxious",
+    ko: "불안",
+    color: cloudRainSnow,
+    gray: B_cloudRainSnow,
+  },
+  down: {
+    en: "Down",
+    ko: "무기력",
+    color: cloudCloud,
+    gray: B_cloudCloud,
+  },
+  numb: {
+    en: "Numb",
+    ko: "냉담",
+    color: cloudSnow,
+    gray: B_cloudSnow,
+  },
+  lonely: {
+    en: "Lonely",
+    ko: "외로움",
+    color: moonCloud,
+    gray: B_moonCloud,
+  },
+  relaxed: {
+    en: "Relaxed",
+    ko: "평온",
+    color: moonStar,
+    gray: B_moonStar,
+  },
+  sad: {
+    en: "Sad",
+    ko: "슬픔",
+    color: cloudRain,
+    gray: B_cloudRain,
+  },
+  protected: {
+    en: "Protected",
+    ko: "보호",
+    color: umbrella,
+    gray: B_umbrella,
+  },
+  happy: {
+    en: "Happy",
+    ko: "행복",
+    color: snow,
+    gray: B_snow,
+  },
+  hopeful: {
+    en: "Hopeful",
+    ko: "희망",
+    color: leaf,
+    gray: B_leaf,
+  },
+  growth: {
+    en: "Growth",
+    ko: "성장",
+    color: tree,
+    gray: B_tree,
+  },
+  confident: {
+    en: "Confident",
+    ko: "자신감",
+    color: glosses,
+    gray: B_glosses,
+  },
+  adventurous: {
+    en: "Adventurous",
+    ko: "모험",
+    color: compass,
+    gray: B_compass,
+  },
 };
