@@ -349,14 +349,54 @@ export default function DiaryEditor() {
         />
 
         {/* 저장 및 취소 버튼 */}
-        <Box display="flex" justifyContent="space-between" gap={2}>
-          <Button className="btn-outline" onClick={() => navigate("/calendar")}>
-            취소
-          </Button>
-          <Button className="btn-primary" onClick={handleSave}>
-            저장
-          </Button>
-        </Box>
+      {/* 저장 및 취소 버튼 */}
+<Box
+  sx={{
+    display: "flex",
+    gap: 2,
+    mt: 3,
+    flexDirection: { xs: "row", sm: "row" }, // 모바일과 동일하게 가로배치
+    justifyContent: "space-between",
+  }}
+>
+  {/* 취소 버튼 */}
+  <Button
+    variant="outlined"
+    onClick={() => navigate("/calendar")}
+    sx={{
+      flex: 1, // 버튼이 동일 비율로 늘어남
+      fontSize: { xs: "1rem", sm: "0.9rem" },
+      height: 48,
+      borderColor: "#45C4B0",
+      color: "#45C4B0",
+      "&:hover": {
+        borderColor: "#3ab3a1",
+        backgroundColor: "rgba(69,196,176,0.05)",
+      },
+    }}
+  >
+    취소
+  </Button>
+
+  {/* 저장 버튼 */}
+  <Button
+    variant="contained"
+    onClick={handleSave}
+    sx={{
+      flex: 1,
+      fontSize: { xs: "1rem", sm: "0.9rem" },
+      height: 48,
+      backgroundColor: "#45C4B0",
+      color: "#fff",
+      "&:hover": {
+        backgroundColor: "#3ab3a1",
+      },
+    }}
+  >
+    저장
+  </Button>
+</Box>
+
       </Box>
     </div>
   );
