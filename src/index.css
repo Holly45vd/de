@@ -1,19 +1,29 @@
 /* === Google Fonts === */
 @import url('https://fonts.googleapis.com/css2?family=Gaegu&family=Hi+Melody&family=Orbit&display=swap');
 
-/* === 글로벌 변수 === */
-:root {
-  --color-primary: #45C4B0; /* 기본 민트 */
-  --color-primary-hover: #3ca896; /* hover 민트 */
+/* === 글로벌 변수 (Classic Palette 일원화) === */
+:root{
+  /* 클래식 팔레트 */
+  --color-coral: #FF6B6B;   /* primary */
+  --color-blush: #F4C2C2;   /* chip/bg */
+  --color-navy:  #0A0F29;   /* text/heading */
+  --color-burg:  #8C0B1E;   /* accent */
+
+  /* 전역 연결 (primary/hover/text) */
+  --color-primary: var(--color-coral);
+  --color-primary-hover: #E85C5C;
   --color-bg: #ffffff;
-  --color-text: #333;
+  --color-text: var(--color-navy);
   --color-text-light: #777;
 
-  --font-main: 'Orbit', 'Hi Melody', 'Gaegu', sans-serif;
-  --font-diary: 'Hi Melody', 'Gaegu', cursive;
-
-  --border-radius: 12px;
+  /* 폰트, 라운드, 트랜지션 */
+  --font-main: 'Orbit','Hi Melody','Gaegu',sans-serif;
+  --font-diary: 'Hi Melody','Gaegu',cursive;
+  --border-radius: 14px;
   --transition-speed: 0.3s;
+
+  /* 포커스 효과 */
+  --focus-ring: 0 0 0 3px rgba(255,107,107,0.35);
 }
 
 /* === 기본 세팅 === */
@@ -45,6 +55,15 @@ a {
 
 a:hover {
   color: var(--color-primary-hover);
+}
+
+/* === 포커스 가시성 === */
+button:focus-visible,
+a:focus-visible,
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--border-radius);
 }
 
 /* === 버튼 통일 === */
@@ -80,7 +99,7 @@ button.outline,
 
 button.outline:hover,
 .btn-outline:hover {
-  background: rgba(69, 196, 176, 0.05);
+  background: rgba(255,107,107,0.06); /* coral tone */
   border-color: var(--color-primary-hover);
   color: var(--color-primary-hover);
 }
@@ -90,14 +109,14 @@ button.outline:hover,
   background: #fff;
   border: 1px solid #eaeaea;
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   transition: transform var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  background-color: #f0faf8;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  background-color: #FFF1F1; /* blush tone */
 }
 
 /* === 일기 본문 전용 === */
@@ -108,11 +127,13 @@ button.outline:hover,
   color: #444;
   white-space: pre-line;
 }
+
+/* === 레이아웃 === */
 .container {
   width: 100%;
-  max-width: 1200px; /* PC에서 최대 1200px */
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 16px; /* 양쪽 패딩 */
+  padding: 16px;
   box-sizing: border-box;
 }
 

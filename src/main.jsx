@@ -1,11 +1,15 @@
 // src/main.jsx
 import React from "react";
-import { createRoot } from "react-dom/client";
+import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
 
-createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import { theme } from "./styles/theme";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <ThemeProvider theme={theme}>
+    <CssBaseline />
     <App />
-  </React.StrictMode>
+  </ThemeProvider>
 );

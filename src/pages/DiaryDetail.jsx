@@ -1,14 +1,28 @@
 // src/pages/DiaryDetail.jsx
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, Modal } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Modal,
+  Stack,
+  Divider,
+} from "@mui/material";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase/firebaseConfig";
-import { doc, getDoc, deleteDoc, collection, getDocs, query, where } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { moodIcons } from "../context/moodIcons";
 import dayjs from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
-// ===== 기분 점수 아이콘 =====
 import {
   faFaceSadTear,
   faFaceTired,
@@ -16,7 +30,6 @@ import {
   faFaceSmileWink,
   faFaceLaughBeam,
 } from "@fortawesome/free-regular-svg-icons";
-
 import {
   faFaceSadTear as fasFaceSadTear,
   faFaceTired as fasFaceTired,
@@ -24,6 +37,7 @@ import {
   faFaceSmileWink as fasFaceSmileWink,
   faFaceLaughBeam as fasFaceLaughBeam,
 } from "@fortawesome/free-solid-svg-icons";
+import { toSafeDate, normalizeDiary } from "../utils/firebaseHelpers";
 
 const scoreIcons = [
   { gray: faFaceSadTear, color: fasFaceSadTear, label: "매우 나쁨" },
@@ -36,6 +50,7 @@ const scoreIcons = [
 export default function DiaryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [diary, setDiary] = useState(null);
   const [allDiaries, setAllDiaries] = useState([]);
   const [prevId, setPrevId] = useState(null);
@@ -47,7 +62,7 @@ export default function DiaryDetail() {
       const ref = doc(db, "diaries", id);
       const snapshot = await getDoc(ref);
       if (snapshot.exists()) {
-        setDiary({ id: snapshot.id, ...snapshot.data() });
+        setDiary(normalizeDiary({ id: snapshot.id, ...snapshot.data() }));
       } else {
         alert("일기를 찾을 수 없습니다.");
         navigate("/calendar");
@@ -60,10 +75,16 @@ export default function DiaryDetail() {
   const fetchAllDiaries = async () => {
     try {
       if (!diary?.userId) return;
-      const q = query(collection(db, "diaries"), where("userId", "==", diary.userId));
+      const q = query(
+        collection(db, "diaries"),
+        where("userId", "==", diary.userId)
+      );
       const snap = await getDocs(q);
-      const diaries = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      diaries.sort((a, b) => a.date.toDate() - b.date.toDate());
+      const diaries = snap.docs
+        .map((d) => normalizeDiary({ id: d.id, ...d.data() }))
+        .sort(
+          (a, b) => (toSafeDate(a.date)?.getTime() || 0) - (toSafeDate(b.date)?.getTime() || 0)
+        );
 
       setAllDiaries(diaries);
 
@@ -77,110 +98,115 @@ export default function DiaryDetail() {
 
   useEffect(() => {
     fetchDiary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
     if (diary) fetchAllDiaries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diary]);
 
   const handleDelete = async () => {
     try {
       await deleteDoc(doc(db, "diaries", id));
-      alert("일기가 삭제되었습니다.");
+      setConfirmOpen(false);
       navigate("/calendar");
     } catch (error) {
       console.error("삭제 실패:", error);
+      alert("삭제 중 오류가 발생했습니다.");
     }
   };
 
   if (!diary) return <Typography>Loading...</Typography>;
 
-  const moodIconData = moodIcons[diary.mood];
+  const moodIconData = diary.mood ? moodIcons[diary.mood] : null;
+  const createdAt = toSafeDate(diary.date);
+  const updatedAt = toSafeDate(diary.updatedAt);
 
   return (
     <div className="container">
       <Box>
-        {/* 이전 페이지로 돌아가기 */}
-        <Typography
-          variant="body2"
-          sx={{ color: "var(--color-primary)", cursor: "pointer", mb: 2 }}
+        {/* 상단 네비게이션 */}
+        <Button
+          variant="text"
+          color="primary"
+          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
+          sx={{ mb: 2 }}
           onClick={() => navigate(-1)}
         >
-          ← 이전 페이지
-        </Typography>
+          이전 페이지
+        </Button>
 
-       {/* 오늘의 기분 + 기분 점수 */}
-<Box
-  display="flex"
-  alignItems="center"
-  justifyContent="center"
-  gap={6} // 두 블록 사이 간격
-  mb={3}
->
-  {/* 오늘의 기분 (아이콘 + 텍스트) */}
-  {moodIconData && (
-    <Box display="flex" alignItems="center" gap={1}>
-      <img
-        src={moodIconData.color}
-        alt={diary.mood}
-        style={{ width: 75, height: 65 }}
-      />
-      <Typography
-        variant="body1"
-        sx={{ color: "var(--color-primary)", fontWeight: "bold" }}
-      >
-        {moodIconData.ko}({moodIconData.en})
-      </Typography>
-    </Box>
-  )}
+        {/* 오늘의 기분 + 점수 */}
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          gap={6}
+          mb={3}
+          sx={{ textAlign: "center" }}
+        >
+          {/* 기분 */}
+          {moodIconData && (
+            <Box display="flex" alignItems="center" gap={1}>
+              <img
+                src={moodIconData.color}
+                alt={diary.mood}
+                style={{ width: 75, height: 65 }}
+              />
+              <Typography variant="body1" sx={{ color: "primary.main", fontWeight: 700 }}>
+                {moodIconData.ko} ({moodIconData.en})
+              </Typography>
+            </Box>
+          )}
 
-  {/* 기분 점수 (아이콘 + 숫자) */}
-  <Box display="flex" alignItems="center" gap={0}>
-    <FontAwesomeIcon
-      icon={scoreIcons[diary.score - 1]?.color || faFaceMeh}
-      size="2x"
-      style={{ color: "var(--color-primary)" }}
-    />
-    <Typography
-      variant="body1"
-      size="2x"
-      sx={{ color: "var(--color-primary)", fontWeight: "bold" }}
-    >
-      {diary.score} 점
-    </Typography>
-  </Box>
-</Box>
+          {/* 점수 */}
+          {diary.score != null && (
+            <Box display="flex" alignItems="center" gap={1}>
+              <FontAwesomeIcon
+                icon={scoreIcons[Number(diary.score) - 1]?.color || faFaceMeh}
+                size="2x"
+                style={{ color: "rgba(0,0,0,0.54)" }}
+              />
+              <Typography variant="body1" sx={{ color: "primary.main", fontWeight: 700 }}>
+                {diary.score} 점
+              </Typography>
+            </Box>
+          )}
+        </Box>
 
-
-
-        {/* 일기 본문 */}
+        {/* 본문 */}
         <Typography variant="body1" className="diary-content" sx={{ mb: 3 }}>
-          {diary.content}
+          {diary.content || ""}
         </Typography>
 
-        
-        {/* 작성일 및 수정일 */}
-        <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-          작성일: {dayjs(diary.date.toDate()).format("YYYY-MM-DD HH:mm")}
-          {diary.updatedAt && (
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            마지막 수정: {dayjs(diary.updatedAt.toDate()).format("YYYY-MM-DD HH:mm")}
+        {/* 작성/수정 정보 */}
+        <Stack spacing={0.5} sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            작성일: {createdAt ? dayjs(createdAt).format("YYYY-MM-DD HH:mm") : "-"}
           </Typography>
-        )}
-        </Typography>
-        
+          {updatedAt && (
+            <Typography variant="body2" color="text.secondary">
+              마지막 수정: {dayjs(updatedAt).format("YYYY-MM-DD HH:mm")}
+            </Typography>
+          )}
+        </Stack>
 
-        {/* 이전/다음 이동 버튼 */}
-        <Box display="flex" justifyContent="space-between" mb={3}>
+        <Divider sx={{ my: 2 }} />
+
+        {/* 이전/다음 이동 */}
+        <Box display="flex" justifyContent="space-between" mb={3} gap={1}>
           <Button
-            className="btn-outline"
+            variant="outlined"
+            color="primary"
             disabled={!prevId}
             onClick={() => navigate(`/diary/${prevId}`)}
           >
             이전 일기
           </Button>
           <Button
-            className="btn-outline"
+            variant="outlined"
+            color="primary"
             disabled={!nextId}
             onClick={() => navigate(`/diary/${nextId}`)}
           >
@@ -188,15 +214,19 @@ export default function DiaryDetail() {
           </Button>
         </Box>
 
-        {/* 수정 및 삭제 버튼 */}
-        <Box display="flex" gap={2}>
-          <Button className="btn-primary" onClick={() => navigate(`/diary/edit/${id}`)}>
+        {/* 수정/삭제 */}
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(`/diary/edit/${id}`)}
+          >
             수정
           </Button>
-          <Button className="btn-outline" color="error" onClick={() => setConfirmOpen(true)}>
+          <Button variant="outlined" color="error" onClick={() => setConfirmOpen(true)}>
             삭제
           </Button>
-        </Box>
+        </Stack>
 
         {/* 삭제 확인 모달 */}
         <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)}>
@@ -206,20 +236,21 @@ export default function DiaryDetail() {
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              width: 300,
+              width: 320,
               bgcolor: "background.paper",
               borderRadius: 2,
               p: 3,
               textAlign: "center",
+              boxShadow: 6,
             }}
           >
             <Typography sx={{ mb: 2 }}>정말 삭제하시겠습니까?</Typography>
-            <Box display="flex" justifyContent="space-around">
+            <Stack direction="row" spacing={1} justifyContent="center">
               <Button onClick={() => setConfirmOpen(false)}>취소</Button>
-              <Button color="error" onClick={handleDelete}>
+              <Button color="error" variant="contained" onClick={handleDelete}>
                 삭제
               </Button>
-            </Box>
+            </Stack>
           </Box>
         </Modal>
       </Box>

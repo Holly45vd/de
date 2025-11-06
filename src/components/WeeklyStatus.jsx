@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Grid } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useAuth } from "../context/AuthContext";
@@ -11,12 +12,13 @@ import "dayjs/locale/ko";
 dayjs.locale("ko");
 
 export default function WeeklyStatus() {
+  const theme = useTheme();
   const { currentUser } = useAuth();
   const [weekData, setWeekData] = useState({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const today = dayjs(); // 오늘 날짜
+  const today = dayjs();
 
   // 이번 주 월요일~일요일
   const weekStart = dayjs().startOf("week").add(1, "day");
@@ -24,9 +26,7 @@ export default function WeeklyStatus() {
 
   // 총 9일: 지난주 일요일(-1) ~ 다음주 월요일(+1)
   const totalDays = [];
-  for (let i = -1; i <= 7; i++) {
-    totalDays.push(weekStart.add(i, "day"));
-  }
+  for (let i = -1; i <= 7; i++) totalDays.push(weekStart.add(i, "day"));
 
   const dayLabels = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -76,11 +76,12 @@ export default function WeeklyStatus() {
         mb: 5,
         p: 2,
         borderRadius: 2,
-        backgroundColor: "#f5f5f5",
+        backgroundColor:
+          theme.palette.mode === "light"
+            ? alpha(theme.palette.primary.main, 0.04) // 연한 코랄 틴트
+            : alpha(theme.palette.primary.main, 0.12),
       }}
     >
-
-
       <Grid container justifyContent="center" alignItems="center">
         {totalDays.map((day, idx) => {
           const dateKey = day.format("YYYY-MM-DD");
@@ -94,13 +95,10 @@ export default function WeeklyStatus() {
             ? moodIcons[mood]?.color
             : moodIcons["default"]?.gray || null;
 
-          // 모든 날짜에서 클릭 가능 → 일기가 있는 경우만
           const isClickable = !!id;
 
           const handleClick = () => {
-            if (isClickable) {
-              navigate(`/diary/${id}`);
-            }
+            if (isClickable) navigate(`/diary/${id}`);
           };
 
           return (
@@ -109,16 +107,24 @@ export default function WeeklyStatus() {
               key={dateKey}
               sx={{
                 textAlign: "center",
-                minWidth: "50px",
+                minWidth: 50,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: isToday ? "#e0f7f5" : "transparent",
-                borderRadius: "8px",
-                padding: "6px 4px",
+                backgroundColor: isToday
+                  ? alpha(theme.palette.primary.main, 0.12) // ✅ 민트 대체
+                  : "transparent",
+                borderRadius: 1,
+                px: 0.5,
+                py: 0.75,
                 transition: "background-color 0.3s ease",
                 cursor: isClickable ? "pointer" : "default",
+                "&:hover": {
+                  backgroundColor: isClickable
+                    ? alpha(theme.palette.primary.main, 0.08)
+                    : "transparent",
+                },
               }}
               onClick={handleClick}
             >
@@ -126,8 +132,10 @@ export default function WeeklyStatus() {
               <Typography
                 variant="subtitle2"
                 sx={{
-                  color: isOutsideCurrentWeek ? "gray" : "black",
-                  fontWeight: "bold",
+                  color: isOutsideCurrentWeek
+                    ? "text.disabled"
+                    : "text.primary",
+                  fontWeight: 700,
                   mb: 0.5,
                 }}
               >
@@ -138,8 +146,10 @@ export default function WeeklyStatus() {
               <Typography
                 variant="subtitle2"
                 sx={{
-                  color: isOutsideCurrentWeek ? "gray" : "black",
-                  fontWeight: isToday ? "bold" : "normal",
+                  color: isOutsideCurrentWeek
+                    ? "text.disabled"
+                    : "text.primary",
+                  fontWeight: isToday ? 700 : 400,
                   mb: 1,
                 }}
               >
@@ -154,18 +164,11 @@ export default function WeeklyStatus() {
                   style={{
                     width: 30,
                     height: 30,
-                    opacity: isOutsideCurrentWeek
-                      ? 0.4
-                      : isClickable
-                      ? 1
-                      : 0.3,
+                    opacity: isOutsideCurrentWeek ? 0.4 : isClickable ? 1 : 0.3,
                   }}
                 />
               ) : (
-                <Typography
-                  variant="body2"
-                  sx={{ mt: 1, color: "gray" }}
-                >
+                <Typography variant="body2" sx={{ mt: 1, color: "text.disabled" }}>
                   -
                 </Typography>
               )}

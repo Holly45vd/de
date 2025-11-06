@@ -1,5 +1,6 @@
 // src/components/Recent30DaysChart.jsx
 import React, { useEffect, useState } from "react";
+import { useTheme, alpha } from "@mui/material/styles";
 import { moodIcons } from "../context/moodIcons";
 import {
   Box,
@@ -26,6 +27,11 @@ import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 
 export default function Recent30DaysChart() {
+  const theme = useTheme();
+  const primary = theme.palette.primary.main;
+  const textSecondary = theme.palette.text.secondary;
+  const grid = alpha(theme.palette.divider, 0.5);
+
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [chartData, setChartData] = useState([]);
@@ -44,16 +50,9 @@ export default function Recent30DaysChart() {
         const today = dayjs();
         const startDate = today.subtract(30, "day").startOf("day");
 
-        const q = query(
-          collection(db, "diaries"),
-          where("userId", "==", currentUser.uid)
-        );
-
+        const q = query(collection(db, "diaries"), where("userId", "==", currentUser.uid));
         const snap = await getDocs(q);
-        const items = snap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const items = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
         // 최근 30일만 필터링
         const filtered = items.filter((item) => {
@@ -84,18 +83,11 @@ export default function Recent30DaysChart() {
     if (!currentUser?.uid) return;
 
     try {
-      const q = query(
-        collection(db, "diaries"),
-        where("userId", "==", currentUser.uid)
-      );
-
+      const q = query(collection(db, "diaries"), where("userId", "==", currentUser.uid));
       const snap = await getDocs(q);
       const filtered = snap.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((item) => {
-          const itemDate = dayjs(item.date.toDate()).format("MM-DD");
-          return itemDate === clickedDate;
-        });
+        .filter((item) => dayjs(item.date.toDate()).format("MM-DD") === clickedDate);
 
       setDiaryDetails(filtered);
       setSelectedDate(clickedDate);
@@ -107,45 +99,32 @@ export default function Recent30DaysChart() {
 
   /** ✅ 일기 클릭 시 상세 페이지로 이동 */
   const handleDiaryClick = (id) => {
-    setOpen(false); // 모달 닫기
-    navigate(`/diary/${id}`); // 상세 페이지 이동
+    setOpen(false);
+    navigate(`/diary/${id}`);
   };
 
   return (
-    <Box
-      sx={{
-        mt: 5,
-        p: 2,
-        borderRadius: 2,
-        boxShadow: 2,
-      }}
-    >
+    <Box sx={{ mt: 5, p: 2, borderRadius: 2, boxShadow: 2 }}>
       {chartData.length > 0 ? (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid stroke={grid} strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
-              label={{
-                value: "날짜",
-                position: "insideBottomRight",
-                offset: -5,
-              }}
+              stroke={textSecondary}
+              label={{ value: "날짜", position: "insideBottomRight", offset: -5 }}
             />
             <YAxis
+              stroke={textSecondary}
               domain={[0, Math.max(...chartData.map((item) => item.score), 5)]}
               allowDecimals={false}
-              label={{
-                value: "점수",
-                angle: -90,
-                position: "insideLeft",
-              }}
+              label={{ value: "점수", angle: -90, position: "insideLeft" }}
             />
             <Tooltip />
             <Line
               type="monotone"
               dataKey="score"
-              stroke="#45C4B0"
+              stroke={primary}           // ✅ 테마 적용
               strokeWidth={3}
               dot={({ payload, cx, cy }) => (
                 <g>
@@ -154,7 +133,7 @@ export default function Recent30DaysChart() {
                     cx={cx}
                     cy={cy}
                     r={8}
-                    fill="#45C4B0"
+                    fill={primary}       // ✅ 테마 적용
                     stroke="#fff"
                     strokeWidth={2}
                   />
@@ -196,22 +175,8 @@ export default function Recent30DaysChart() {
           }}
         >
           {/* 모달 헤더 */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              mb: 2,
-              alignItems: "center",
-            }}
-          >
-            <Typography
-              variant="subtitle2"
-              sx={{
-                color: "#888", // 날짜 회색
-                fontSize: "0.9rem", // 조금 작은 사이즈
-                fontWeight: "normal",
-              }}
-            >
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2, alignItems: "center" }}>
+            <Typography variant="subtitle2" sx={{ color: "text.secondary", fontSize: "0.9rem", fontWeight: "normal" }}>
               {selectedDate}
             </Typography>
             <IconButton onClick={() => setOpen(false)}>
@@ -227,7 +192,7 @@ export default function Recent30DaysChart() {
                 sx={{
                   mb: 2,
                   cursor: "pointer",
-                  "&:hover": { backgroundColor: "#e0f7f5" },
+                  "&:hover": { backgroundColor: alpha(primary, 0.08) }, // ✅ 민트 대체
                 }}
                 onClick={() => handleDiaryClick(diary.id)}
               >
@@ -240,10 +205,7 @@ export default function Recent30DaysChart() {
                       style={{ width: 35, height: 30 }}
                     />
                     {/* 내용 20자 제한 */}
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#555", flex: 1 }}
-                    >
+                    <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
                       {diary.content.length > 20
                         ? `${diary.content.slice(0, 20)}...`
                         : diary.content}

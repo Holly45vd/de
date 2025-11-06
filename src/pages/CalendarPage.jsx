@@ -1,6 +1,14 @@
 // src/pages/CalendarPage.jsx
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Card, CardContent, Button, useMediaQuery } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  useMediaQuery,
+} from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import Calendar from "react-calendar";
 import "../styles/calendar.css";
 import "react-calendar/dist/Calendar.css";
@@ -11,8 +19,10 @@ import { useAuth } from "../context/AuthContext";
 import { moodIcons } from "../context/moodIcons";
 import { useNavigate } from "react-router-dom";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import { toSafeDate } from "../utils/firebaseHelpers";
 
 export default function CalendarPage() {
+  const theme = useTheme();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width:768px)");
@@ -22,37 +32,47 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [selectedDiaries, setSelectedDiaries] = useState([]);
 
-  /** Firestore에서 일기 불러오기 */
+  /** Firestore에서 일기 불러오기 (타입 안전) */
   useEffect(() => {
     const fetchDiaries = async () => {
       if (!currentUser?.uid) return;
 
       try {
-        const q = query(collection(db, "diaries"), where("userId", "==", currentUser.uid));
+        const q = query(
+          collection(db, "diaries"),
+          where("userId", "==", currentUser.uid)
+        );
         const snap = await getDocs(q);
-        const allDiaries = [];
+
+        const all = [];
         const byDate = {};
 
         snap.docs.forEach((docSnap) => {
           const data = docSnap.data();
-          const diary = { id: docSnap.id, ...data };
-          allDiaries.push(diary);
+          const safeDate = toSafeDate(data.date);
+          const diary = {
+            id: docSnap.id,
+            ...data,
+            date: safeDate, // JS Date | null
+          };
+          all.push(diary);
 
-          const dateKey = dayjs(data.date.toDate()).format("YYYY-MM-DD");
-          if (!byDate[dateKey]) {
-            byDate[dateKey] = data.mood;
+          if (safeDate) {
+            const dateKey = dayjs(safeDate).format("YYYY-MM-DD");
+            // 같은 날 여러 개면 마지막 mood만 쓰던 로직 유지 (원하면 배열로 확장 가능)
+            if (!byDate[dateKey]) byDate[dateKey] = data.mood;
           }
         });
 
-        setDiaries(allDiaries);
+        setDiaries(all);
         setDiariesByDate(byDate);
 
         // 오늘 날짜 초기값
         const todayKey = dayjs().format("YYYY-MM-DD");
         setSelectedDate(todayKey);
         setSelectedDiaries(
-          allDiaries.filter(
-            (d) => dayjs(d.date.toDate()).format("YYYY-MM-DD") === todayKey
+          all.filter(
+            (d) => d.date && dayjs(d.date).format("YYYY-MM-DD") === todayKey
           )
         );
       } catch (error) {
@@ -68,22 +88,22 @@ export default function CalendarPage() {
     const dateKey = dayjs(date).format("YYYY-MM-DD");
     setSelectedDate(dateKey);
     setSelectedDiaries(
-      diaries.filter((d) => dayjs(d.date.toDate()).format("YYYY-MM-DD") === dateKey)
+      diaries.filter((d) => d.date && dayjs(d.date).format("YYYY-MM-DD") === dateKey)
     );
   };
 
-  /** 달력 안에 감정 아이콘 표시 */
+  /** 달력 타일 렌더 (감정 아이콘/날짜) */
   const renderTileContent = ({ date, view }) => {
     if (view !== "month") return null;
     const dateKey = dayjs(date).format("YYYY-MM-DD");
+    const moodKey = diariesByDate[dateKey];
 
-    const hasDiary = diariesByDate[dateKey];
     return (
       <div style={{ textAlign: "center", marginTop: "2px" }}>
-        {hasDiary ? (
+        {moodKey ? (
           <img
-            src={moodIcons[hasDiary]?.color}
-            alt={moodIcons[hasDiary]?.ko}
+            src={moodIcons[moodKey]?.color}
+            alt={moodIcons[moodKey]?.ko || moodKey}
             style={{
               width: isMobile ? 30 : 60,
               height: isMobile ? 26 : 54,
@@ -93,7 +113,12 @@ export default function CalendarPage() {
             }}
           />
         ) : (
-          <span style={{ fontSize: isMobile ? "0.7rem" : "0.9rem", color: "#333" }}>
+          <span
+            style={{
+              fontSize: isMobile ? "0.7rem" : "0.9rem",
+              color: "inherit",
+            }}
+          >
             {dayjs(date).date()}
           </span>
         )}
@@ -104,11 +129,13 @@ export default function CalendarPage() {
   /** 일기 카드 클릭 → 상세 페이지 이동 */
   const handleCardClick = (id) => navigate(`/diary/${id}`);
 
+  const primary = theme.palette.primary.main;
+
   return (
     <Box
       sx={{
         p: 3,
-        maxWidth: isMobile ? 380 : 900,
+        maxWidth: isMobile ? 420 : 960,
         mx: "auto",
         textAlign: "center",
       }}
@@ -116,7 +143,7 @@ export default function CalendarPage() {
       <Typography
         variant="h5"
         mb={3}
-        sx={{ fontWeight: "bold", color: "var(--color-primary)" }}
+        sx={{ fontWeight: 800, color: "primary.main" }}
       >
         캘린더
       </Typography>
@@ -127,25 +154,25 @@ export default function CalendarPage() {
           mb: 4,
           ".react-calendar": {
             width: "100%",
-            maxWidth: isMobile ? "360px" : "900px",
-            fontSize: isMobile ? "0.8rem" : "1rem",
+            maxWidth: isMobile ? "380px" : "920px",
+            fontSize: isMobile ? "0.85rem" : "1rem",
             borderRadius: "12px",
-            padding: isMobile ? "5px" : "10px",
+            padding: isMobile ? "6px" : "10px",
+            border: `1px solid ${alpha(theme.palette.text.primary, 0.12)}`,
+            background: theme.palette.background.paper,
           },
           ".react-calendar__tile": {
-            flex: "1 0 calc(100% / 7)", // 한 줄에 정확히 7칸 유지
-            height: isMobile ? "50px" : "90px", // 모바일은 작게, PC는 크게
+            flex: "1 0 calc(100% / 7)",
+            height: isMobile ? "56px" : "92px",
             textAlign: "center",
             borderRadius: "8px",
             padding: "5px 0",
-            transition: "0.3s",
-            "&:hover": {
-              backgroundColor: "#f0f8ff",
-            },
+            transition: "0.2s",
+            "&:hover": { backgroundColor: alpha(primary, 0.08) },
           },
           ".react-calendar__tile--active": {
-            backgroundColor: "var(--color-primary)",
-            color: "#fff",
+            backgroundColor: primary,
+            color: theme.palette.getContrastText(primary),
           },
         }}
       >
@@ -154,7 +181,7 @@ export default function CalendarPage() {
           value={dayjs(selectedDate).toDate()}
           onClickDay={handleDateClick}
           tileContent={renderTileContent}
-          formatDay={() => ""} // 날짜 숫자는 숨김
+          formatDay={() => ""} // 기본 날짜 숫자는 타일 콘텐츠로 대체
         />
       </Box>
 
@@ -164,35 +191,40 @@ export default function CalendarPage() {
           selectedDiaries.map((diary) => (
             <Card
               key={diary.id}
-              className="card"
               onClick={() => handleCardClick(diary.id)}
               sx={{
                 mb: 2,
                 cursor: "pointer",
-                "&:hover": { boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" },
+                borderRadius: 2,
+                boxShadow: 1,
+                "&:hover": { boxShadow: 4, backgroundColor: alpha(primary, 0.04) },
               }}
             >
               <CardContent>
                 <Box
                   display="flex"
                   alignItems="center"
-                  justifyContent="space-between" // 좌-우 배치
+                  justifyContent="space-between"
                   sx={{ width: "100%" }}
                 >
                   {/* 왼쪽: 아이콘 + 내용 */}
-                  <Box display="flex" alignItems="center" gap={1} sx={{ flex: 1 }}>
+                  <Box display="flex" alignItems="center" gap={1.5} sx={{ flex: 1 }}>
                     <img
                       src={moodIcons[diary.mood]?.color}
-                      alt={moodIcons[diary.mood]?.ko}
+                      alt={moodIcons[diary.mood]?.ko || diary.mood}
                       style={{ width: 30, height: 30 }}
                     />
                     <Typography
                       variant="body1"
-                      sx={{ flexGrow: 1, textAlign: "left", overflow: "hidden" }}
+                      sx={{
+                        flexGrow: 1,
+                        textAlign: "left",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                      }}
                     >
-                      {diary.content.length > 20
-                        ? `${diary.content.slice(0, 20)}...`
-                        : diary.content}
+                      {diary.content || ""}
                     </Typography>
                   </Box>
 
@@ -200,13 +232,13 @@ export default function CalendarPage() {
                   <Typography
                     variant="body2"
                     sx={{
-                      minWidth: "60px",
+                      minWidth: "64px",
                       textAlign: "center",
-                      color: "#666",
-                      fontWeight: "bold",
+                      color: "text.secondary",
+                      fontWeight: 700,
                     }}
                   >
-                    {dayjs(diary.date.toDate()).format("MM-DD")}
+                    {diary.date ? dayjs(diary.date).format("MM-DD") : "-"}
                   </Typography>
                 </Box>
               </CardContent>
@@ -220,7 +252,8 @@ export default function CalendarPage() {
                 : "이 날짜에는 작성된 일기가 없습니다."}
             </Typography>
             <Button
-              className="btn-primary"
+              variant="contained"
+              color="primary"
               startIcon={<EditNoteIcon />}
               onClick={() => navigate("/editor")}
             >

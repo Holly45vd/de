@@ -1,4 +1,6 @@
-/* App 전용 스타일 최소화 */
+/* src/App.css */
+/* App 전용 최소 스타일: 전역 토큰 사용 */
+
 #root {
   max-width: 1280px;
   margin: 0 auto;

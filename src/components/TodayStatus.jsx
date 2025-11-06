@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import dayjs from "dayjs";
 import { moodIcons } from "../context/moodIcons";
 import { Link, useNavigate } from "react-router-dom";
@@ -28,13 +29,12 @@ const scoreIcons = [
 ];
 
 export default function TodayStatus({ todayDiary }) {
-  const today = dayjs().format("MM-DD"); // 년도 제외하고 월-일만 표시
+  const theme = useTheme();
+  const today = dayjs().format("MM-DD");
   const navigate = useNavigate();
 
   const handleViewDiary = () => {
-    if (todayDiary?.id) {
-      navigate(`/diary/${todayDiary.id}`);
-    }
+    if (todayDiary?.id) navigate(`/diary/${todayDiary.id}`);
   };
 
   return (
@@ -48,35 +48,20 @@ export default function TodayStatus({ todayDiary }) {
         cursor: todayDiary ? "pointer" : "default",
         transition: "background-color 0.2s ease",
         "&:hover": {
-          backgroundColor: todayDiary ? "#f0fdfa" : "#f9f9f9",
+          backgroundColor: todayDiary
+            ? alpha(theme.palette.primary.main, 0.06) // 기존 #f0fdfa 대체
+            : theme.palette.action.hover,            // 기존 #f9f9f9 대체
         },
       }}
       onClick={todayDiary ? handleViewDiary : undefined}
     >
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: 2 }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: "bold",
-            color: "var(--color-primary)",
-          }}
-        >
+      <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: "bold", color: "primary.main" }}>
           오늘의 일기
         </Typography>
 
-        {/* 날짜 - 회색 표시 */}
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color: "#888",
-            fontWeight: "normal",
-          }}
-        >
+        {/* 날짜 */}
+        <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: "normal" }}>
           {today}
         </Typography>
       </Box>
@@ -87,10 +72,7 @@ export default function TodayStatus({ todayDiary }) {
           alignItems="center"
           justifyContent="center"
           gap={3}
-          sx={{
-            flexWrap: "wrap",
-            mt: 2,
-          }}
+          sx={{ flexWrap: "wrap", mt: 2 }}
         >
           {/* 오늘의 기분 아이콘 */}
           {todayDiary.mood && moodIcons[todayDiary.mood]?.color && (
@@ -102,10 +84,7 @@ export default function TodayStatus({ todayDiary }) {
                 height={60}
                 style={{ objectFit: "contain" }}
               />
-              <Typography
-                variant="body1"
-                sx={{ color: "var(--color-primary)", fontWeight: "bold" }}
-              >
+              <Typography variant="body1" sx={{ color: "primary.main", fontWeight: "bold" }}>
                 {moodIcons[todayDiary.mood].ko} ({moodIcons[todayDiary.mood].en})
               </Typography>
             </Box>
@@ -117,7 +96,7 @@ export default function TodayStatus({ todayDiary }) {
               <Typography
                 variant="subtitle2"
                 sx={{
-                  color: "var(--color-primary)",
+                  color: "primary.main",
                   fontWeight: "bold",
                   display: "flex",
                   alignItems: "center",
@@ -128,7 +107,7 @@ export default function TodayStatus({ todayDiary }) {
                 <FontAwesomeIcon
                   icon={scoreIcons[todayDiary.score - 1]?.color || faFaceMeh}
                   size="2x"
-                  style={{ color: "var(--color-primary)" }}
+                  style={{ color: theme.palette.primary.main }}
                 />
               </Typography>
             </Box>
@@ -142,12 +121,6 @@ export default function TodayStatus({ todayDiary }) {
             to="/editor"
             variant="contained"
             color="primary"
-            sx={{
-              backgroundColor: "#45C4B0",
-              "&:hover": {
-                backgroundColor: "#38a99a",
-              },
-            }}
           >
             오늘 일기 쓰기
           </Button>

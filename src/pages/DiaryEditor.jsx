@@ -7,7 +7,9 @@ import {
   TextField,
   MenuItem,
   Grid,
+  Stack,
 } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import dayjs from "dayjs";
 import { useNavigate, useParams } from "react-router-dom";
 import { db } from "../firebase/firebaseConfig";
@@ -23,7 +25,7 @@ import { moodIcons } from "../context/moodIcons";
 import { useAuth } from "../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-// ===== 기분 점수 아이콘 =====
+// 기분 점수 아이콘
 import {
   faFaceSadTear,
   faFaceTired,
@@ -31,7 +33,6 @@ import {
   faFaceSmileWink,
   faFaceLaughBeam,
 } from "@fortawesome/free-regular-svg-icons";
-
 import {
   faFaceSadTear as fasFaceSadTear,
   faFaceTired as fasFaceTired,
@@ -39,6 +40,19 @@ import {
   faFaceSmileWink as fasFaceSmileWink,
   faFaceLaughBeam as fasFaceLaughBeam,
 } from "@fortawesome/free-solid-svg-icons";
+
+// 안전한 Date 변환 유틸 (없으면 간단 버전 포함)
+const toSafeDate = (v) => {
+  if (!v) return null;
+  try {
+    if (typeof v?.toDate === "function") return v.toDate(); // Firestore Timestamp
+    if (v instanceof Date) return v;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+};
 
 const scoreIcons = [
   { gray: faFaceSadTear, color: fasFaceSadTear, label: "매우 나쁨" },
@@ -49,6 +63,7 @@ const scoreIcons = [
 ];
 
 export default function DiaryEditor() {
+  const theme = useTheme();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
@@ -61,7 +76,7 @@ export default function DiaryEditor() {
   const [selectedQuote, setSelectedQuote] = useState("");
   const [hoveredMood, setHoveredMood] = useState(null);
 
-  /** 수정 모드 시 기존 데이터 불러오기 */
+  // 수정 모드: 기존 데이터 로드
   useEffect(() => {
     const fetchDiary = async () => {
       if (!id) return;
@@ -70,10 +85,11 @@ export default function DiaryEditor() {
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const data = snap.data();
-          setDate(dayjs(data.date.toDate()).format("YYYY-MM-DD"));
-          setMood(data.mood);
-          setScore(data.score);
-          setContent(data.content);
+          const d = toSafeDate(data.date) || new Date();
+          setDate(dayjs(d).format("YYYY-MM-DD"));
+          setMood(data.mood ?? "");
+          setScore(Number(data.score) || 3);
+          setContent(data.content ?? "");
         }
       } catch (error) {
         console.error("기존 일기 불러오기 실패:", error);
@@ -82,20 +98,13 @@ export default function DiaryEditor() {
     fetchDiary();
   }, [id]);
 
-  /** 감정 선택 시 Firestore에서 추천 문구 불러오기 */
+  // 감정 선택 시 추천 문구 로드
   useEffect(() => {
     const fetchQuotes = async () => {
       if (!mood) return;
       try {
-        console.log("선택된 mood key:", mood); // key 로그 확인
-
         const snap = await getDoc(doc(db, "moodQuotes", mood));
-        if (snap.exists()) {
-          setQuotes(snap.data().quotes || []);
-        } else {
-          console.error(`Firestore 문서가 존재하지 않음 → key: ${mood}`);
-          setQuotes([]);
-        }
+        setQuotes(snap.exists() ? snap.data().quotes || [] : []);
       } catch (error) {
         console.error("추천 문구 불러오기 실패:", error);
         setQuotes([]);
@@ -104,16 +113,21 @@ export default function DiaryEditor() {
     fetchQuotes();
   }, [mood]);
 
-  /** 저장 */
+  // 저장
   const handleSave = async () => {
     if (!content.trim() || !mood || !score) {
       alert("모든 필드를 입력해주세요.");
       return;
     }
+    if (!currentUser?.uid) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
     try {
       if (id) {
         await updateDoc(doc(db, "diaries", id), {
-          date: dayjs(date).toDate(),
+          userId: currentUser.uid,
+          date: dayjs(date).toDate(), // 사용자가 선택한 날짜
           mood,
           score,
           content,
@@ -123,7 +137,7 @@ export default function DiaryEditor() {
       } else {
         await addDoc(collection(db, "diaries"), {
           userId: currentUser.uid,
-          date: dayjs(date).toDate(),
+          date: dayjs(date).toDate(), // 기본: 오늘로 세팅
           mood,
           score,
           content,
@@ -134,19 +148,25 @@ export default function DiaryEditor() {
       navigate("/calendar");
     } catch (error) {
       console.error("저장 실패:", error);
+      alert("저장 중 오류가 발생했습니다.");
     }
   };
 
-  /** 추천 문구 본문에 추가 */
+  // 추천 문구 본문에 추가
   const handleInsertQuote = (quote) => {
-    setContent((prev) => prev + "\n" + quote);
+    setContent((prev) => (prev ? prev + "\n" + quote : quote));
     setSelectedQuote("");
   };
+
+  const primary = theme.palette.primary.main;
+  const tileHoverShadow = theme.shadows[3];
+  const tileBorderSelected = `2px solid ${primary}`;
+  const tileBorder = `1px solid ${alpha(theme.palette.text.primary, 0.16)}`;
 
   return (
     <div className="container">
       <Box>
-        <Typography variant="h5" mb={3} textAlign="center">
+        <Typography variant="h5" mb={3} textAlign="center" sx={{ fontWeight: 800 }}>
           {id ? "일기 수정" : "새 일기 작성"}
         </Typography>
 
@@ -158,11 +178,12 @@ export default function DiaryEditor() {
           onChange={(e) => setDate(e.target.value)}
           fullWidth
           sx={{ mb: 2 }}
+          InputLabelProps={{ shrink: true }}
         />
 
         {/* 오늘의 기분 선택 */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="subtitle1" mb={2} textAlign="center">
+          <Typography variant="subtitle1" mb={2} textAlign="center" sx={{ fontWeight: 700 }}>
             오늘의 기분
           </Typography>
 
@@ -176,9 +197,9 @@ export default function DiaryEditor() {
                 <Grid
                   item
                   key={key}
-                  xs={4} // 모바일: 3개
-                  sm={4}
-                  md={2.4} // PC: 5개
+                  xs={4}
+                  sm={3}
+                  md={2}
                   sx={{ textAlign: "center" }}
                 >
                   <Box
@@ -188,37 +209,39 @@ export default function DiaryEditor() {
                     sx={{
                       cursor: "pointer",
                       textAlign: "center",
-                      margin: "0 auto",
+                      mx: "auto",
                       width: "100%",
-                      maxWidth: 110,
+                      maxWidth: 120,
                       p: 1,
-                      borderRadius: "var(--border-radius)",
-                      border: "none",
-                      boxShadow: "none",
-                      transition: "0.3s ease",
+                      borderRadius: 2,
+                      border: isSelected ? tileBorderSelected : tileBorder,
+                      transition: "0.25s ease",
                       "&:hover": {
                         transform: "translateY(-3px)",
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                        boxShadow: tileHoverShadow,
                       },
+                      background:
+                        isSelected ? alpha(primary, 0.06) : "transparent",
                     }}
                   >
                     <img
                       src={isSelected || isHovered ? iconData.color : iconData.gray}
                       alt={iconData.en}
                       style={{
-                        width: 90,
-                        height: 90,
+                        width: 88,
+                        height: 88,
                         margin: "0 auto 8px",
                         display: "block",
-                        transition: "0.3s",
+                        transition: "0.25s",
+                        filter: isSelected ? "none" : "grayscale(0.05)",
                       }}
                     />
                     <Typography
                       variant="body2"
                       sx={{
                         fontSize: "0.85rem",
-                        color: isSelected ? "var(--color-primary)" : "#333",
-                        fontWeight: isSelected ? "bold" : "normal",
+                        color: isSelected ? "primary.main" : "text.primary",
+                        fontWeight: isSelected ? 700 : 400,
                         lineHeight: 1.2,
                       }}
                     >
@@ -228,7 +251,7 @@ export default function DiaryEditor() {
                       variant="caption"
                       sx={{
                         fontSize: "0.8rem",
-                        color: isSelected ? "var(--color-primary)" : "#666",
+                        color: isSelected ? "primary.main" : "text.secondary",
                         display: "block",
                         lineHeight: 1.1,
                       }}
@@ -244,7 +267,7 @@ export default function DiaryEditor() {
 
         {/* 오늘의 기분 점수 선택 */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="subtitle1" mb={2} textAlign="center">
+          <Typography variant="subtitle1" mb={2} textAlign="center" sx={{ fontWeight: 700 }}>
             오늘의 기분 점수
           </Typography>
           <Box
@@ -264,25 +287,25 @@ export default function DiaryEditor() {
                   sx={{
                     cursor: "pointer",
                     textAlign: "center",
-                    border: isSelected
-                      ? "2px solid var(--color-primary)"
-                      : "1px solid #ccc",
-                    borderRadius: "var(--border-radius)",
+                    border: isSelected ? tileBorderSelected : tileBorder,
+                    borderRadius: 2,
                     p: 1,
                     width: 80,
-                    transition: "0.3s",
+                    transition: "0.25s",
                     "&:hover": {
-                      borderColor: "var(--color-primary)",
+                      borderColor: primary,
                       transform: "translateY(-3px)",
+                      boxShadow: tileHoverShadow,
                     },
+                    background: isSelected ? alpha(primary, 0.06) : "transparent",
                   }}
                 >
                   <FontAwesomeIcon
                     icon={isSelected ? item.color : item.gray}
                     size="2x"
                     style={{
-                      color: isSelected ? "var(--color-primary)" : "#ccc",
-                      transition: "0.3s",
+                      color: isSelected ? primary : "#999",
+                      transition: "0.2s",
                     }}
                   />
                 </Box>
@@ -301,21 +324,10 @@ export default function DiaryEditor() {
               fullWidth
               SelectProps={{
                 displayEmpty: true,
-                MenuProps: {
-                  PaperProps: {
-                    style: {
-                      maxHeight: 200,
-                    },
-                  },
-                },
+                MenuProps: { PaperProps: { style: { maxHeight: 220 } } },
               }}
               placeholder="추천문구를 선택하면 일기 내용에 포함됩니다."
-              sx={{
-                mb: 1,
-                "& .MuiSelect-select": {
-                  color: selectedQuote ? "#000" : "#888",
-                },
-              }}
+              sx={{ mb: 1 }}
             >
               <MenuItem value="" disabled>
                 추천문구를 선택하면 일기 내용에 포함됩니다.
@@ -327,11 +339,7 @@ export default function DiaryEditor() {
               ))}
             </TextField>
           ) : (
-            <Typography
-              variant="body2"
-              color="textSecondary"
-              textAlign="center"
-            >
+            <Typography variant="body2" color="text.secondary" textAlign="center">
               추천 문구가 없습니다.
             </Typography>
           )}
@@ -345,58 +353,32 @@ export default function DiaryEditor() {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           fullWidth
-          sx={{ mb: 3 }}
+          sx={{ mb: 2 }}
         />
 
-        {/* 저장 및 취소 버튼 */}
-      {/* 저장 및 취소 버튼 */}
-<Box
-  sx={{
-    display: "flex",
-    gap: 2,
-    mt: 3,
-    flexDirection: { xs: "row", sm: "row" }, // 모바일과 동일하게 가로배치
-    justifyContent: "space-between",
-  }}
->
-  {/* 취소 버튼 */}
-  <Button
-    variant="outlined"
-    onClick={() => navigate("/calendar")}
-    sx={{
-      flex: 1, // 버튼이 동일 비율로 늘어남
-      fontSize: { xs: "1rem", sm: "0.9rem" },
-      height: 48,
-      borderColor: "#45C4B0",
-      color: "#45C4B0",
-      "&:hover": {
-        borderColor: "#3ab3a1",
-        backgroundColor: "rgba(69,196,176,0.05)",
-      },
-    }}
-  >
-    취소
-  </Button>
-
-  {/* 저장 버튼 */}
-  <Button
-    variant="contained"
-    onClick={handleSave}
-    sx={{
-      flex: 1,
-      fontSize: { xs: "1rem", sm: "0.9rem" },
-      height: 48,
-      backgroundColor: "#45C4B0",
-      color: "#fff",
-      "&:hover": {
-        backgroundColor: "#3ab3a1",
-      },
-    }}
-  >
-    저장
-  </Button>
-</Box>
-
+        {/* 저장 / 취소 */}
+        <Stack
+          direction={{ xs: "row", sm: "row" }}
+          spacing={2}
+          sx={{ mt: 2 }}
+        >
+          <Button
+            variant="outlined"
+            color="primary"
+            fullWidth
+            onClick={() => navigate("/calendar")}
+          >
+            취소
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            onClick={handleSave}
+          >
+            저장
+          </Button>
+        </Stack>
       </Box>
     </div>
   );

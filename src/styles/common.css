@@ -12,7 +12,7 @@
 }
 
 .btn:hover {
-  background: #3fb29e;
+  background: var(--color-primary-hover); /* 테마 기반 */
 }
 
 /* 카드 공통 스타일 */
@@ -26,6 +26,7 @@
 
 .card:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  background: rgba(255, 107, 107, 0.05); /* blush tint */
 }
 
 /* 입력폼 공통 스타일 */
