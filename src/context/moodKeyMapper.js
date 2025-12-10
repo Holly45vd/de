@@ -9,4 +9,6 @@ export const moodKeyMapper = {
   행복: "happiness",
   희망: "hope",
   성장: "growth",
+  자신감: "confident",     // ✅ 추가
+  모험: "adventurous",      // ✅ 추가
 };

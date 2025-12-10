@@ -119,9 +119,17 @@ export default function DiaryDetail() {
 
   if (!diary) return <Typography>Loading...</Typography>;
 
-  const moodIconData = diary.mood ? moodIcons[diary.mood] : null;
-  const createdAt = toSafeDate(diary.date);
-  const updatedAt = toSafeDate(diary.updatedAt);
+const moodIconData = diary.mood ? moodIcons[diary.mood] : null;
+
+// ‘해당일’ = 캘린더에서 선택한 날짜
+const diaryDate = toSafeDate(diary.date);
+
+// ‘작성일’ = 실제 작성한 시각
+const createdAt = toSafeDate(diary.createdAt);
+
+// ‘수정일’ = 수정한 시각(있을 때만)
+const updatedAt = toSafeDate(diary.updatedAt);
+
 
   return (
     <div className="container">
@@ -182,14 +190,23 @@ export default function DiaryDetail() {
 
         {/* 작성/수정 정보 */}
         <Stack spacing={0.5} sx={{ mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            작성일: {createdAt ? dayjs(createdAt).format("YYYY-MM-DD HH:mm") : "-"}
-          </Typography>
-          {updatedAt && (
-            <Typography variant="body2" color="text.secondary">
-              마지막 수정: {dayjs(updatedAt).format("YYYY-MM-DD HH:mm")}
-            </Typography>
-          )}
+<Box sx={{ mt: 2 }}>
+  <Typography variant="body2" color="text.secondary">
+    해당일:{" "}
+    {diaryDate ? dayjs(diaryDate).format("YYYY-MM-DD") : "-"}
+  </Typography>
+
+  <Typography variant="body2" color="text.secondary">
+    작성일:{" "}
+    {createdAt ? dayjs(createdAt).format("YYYY-MM-DD HH:mm") : "-"}
+  </Typography>
+
+  {updatedAt && (
+    <Typography variant="body2" color="text.secondary">
+      수정일: {dayjs(updatedAt).format("YYYY-MM-DD HH:mm")}
+    </Typography>
+  )}
+</Box>
         </Stack>
 
         <Divider sx={{ my: 2 }} />

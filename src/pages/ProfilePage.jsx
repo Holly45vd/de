@@ -1,4 +1,7 @@
+// src/pages/ProfilePage.jsx
 import React, { useEffect, useState } from "react";
+import { useColorTheme } from "../context/ColorThemeContext";
+
 import {
   Box,
   Typography,
@@ -36,6 +39,7 @@ export default function ProfilePage() {
   const theme = useTheme();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const { themeName, setThemeName } = useColorTheme();
 
   const [nickname, setNickname] = useState("");
   const [editingNickname, setEditingNickname] = useState(false);
@@ -167,13 +171,26 @@ export default function ProfilePage() {
   if (!currentUser) return null;
 
   const primary = theme.palette.primary.main;
-  const panelBg = alpha(theme.palette.primary.main, 0.08);   // 상단 카드 틴트
-  const chipBg = alpha(theme.palette.primary.main, 0.12);    // 칩 배경
+  const panelBg = alpha(theme.palette.primary.main, 0.08);
+  const chipBg = alpha(theme.palette.primary.main, 0.12);
+
+  const themeOptions = [
+    { id: "coral", label: "코랄", color: "#FF6B6B", desc: "밝고 가벼운 느낌" },
+    { id: "navy", label: "네이비", color: "#28336D", desc: "차분한 야간 모드 느낌" },
+    // 필요하면 여기서 계속 추가
+  ];
 
   return (
     <div className="container">
-      <Box sx={{ mt: 5, mb: 6 }}>
-        {/* 상단 프로필 카드 */}
+      <Box sx={{ mt: 5, mb: 6, maxWidth: 640, mx: "auto" }}>
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: 800, mb: 3, textAlign: "left", color: "primary.main" }}
+        >
+          내 정보
+        </Typography>
+
+        {/* === 상단 프로필 카드 === */}
         <Card
           sx={{
             mb: 4,
@@ -181,204 +198,311 @@ export default function ProfilePage() {
             boxShadow: theme.shadows[1],
             background: `linear-gradient(180deg, ${panelBg}, transparent)`,
             borderRadius: 3,
+            p: 1,
           }}
         >
           <CardContent>
-            <Box sx={{ position: "relative", display: "inline-block" }}>
-              <Avatar
-                sx={{
-                  width: 96,
-                  height: 96,
-                  mx: "auto",
-                  mb: 2,
-                  bgcolor: primary,
-                  color: theme.palette.primary.contrastText,
-                  fontWeight: 700,
-                  fontSize: 28,
-                }}
-              >
-                {selectedAvatar ? (
-                  <FontAwesomeIcon
-                    icon={avatarIcons.find(
-                      (icon) => icon.iconName === selectedAvatar
-                    )}
-                    size="lg"
-                    color="white"
-                  />
-                ) : (
-                  nickname[0]?.toUpperCase() ||
-                  currentUser.email[0]?.toUpperCase()
-                )}
-              </Avatar>
-
-              {/* 아바타 수정 버튼 */}
-              <IconButton
-                size="small"
-                onClick={() => setAvatarModalOpen(true)}
-                sx={{
-                  position: "absolute",
-                  bottom: 6,
-                  right: 6,
-                  bgcolor: theme.palette.background.paper,
-                  boxShadow: theme.shadows[2],
-                  "&:hover": { bgcolor: alpha(primary, 0.1) },
-                }}
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </Box>
-
-            {/* 닉네임 + 편집 */}
-            <Box sx={{ mt: 1.5 }}>
-              {editingNickname ? (
-                <Stack direction="row" spacing={1} justifyContent="center">
-                  <TextField
-                    size="small"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                  />
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleNicknameSave}
-                  >
-                    저장
-                  </Button>
-                  <Button
-                    variant="text"
-                    onClick={() => setEditingNickname(false)}
-                  >
-                    취소
-                  </Button>
-                </Stack>
-              ) : (
-                <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    {nickname || "닉네임 없음"}
-                  </Typography>
-                  <IconButton size="small" onClick={() => setEditingNickname(true)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </Stack>
-              )}
-            </Box>
-
-            {/* 간단 통계 */}
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1.5}
-              justifyContent="center"
-              alignItems="center"
-              sx={{ mt: 2.5 }}
-            >
-              <Box
-                sx={{
-                  px: 1.25,
-                  py: 0.5,
-                  bgcolor: chipBg,
-                  borderRadius: 999,
-                  minWidth: 120,
-                }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  총 일기: {diaryCount}건
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  px: 1.25,
-                  py: 0.5,
-                  bgcolor: chipBg,
-                  borderRadius: 999,
-                  minWidth: 120,
-                }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  평균 점수: {averageScore}
-                </Typography>
-              </Box>
-            </Stack>
-
-            {/* 비번 변경 섹션 */}
-            <Box sx={{ mt: 3 }}>
-              {!showPasswordInput ? (
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => setShowPasswordInput(true)}
+            {/* 아바타 + 이름 */}
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <Box sx={{ position: "relative", display: "inline-block" }}>
+                <Avatar
+                  sx={{
+                    width: 96,
+                    height: 96,
+                    mx: "auto",
+                    mb: 1.5,
+                    bgcolor: primary,
+                    color: theme.palette.primary.contrastText,
+                    fontWeight: 700,
+                    fontSize: 28,
+                  }}
                 >
-                  비밀번호 변경
-                </Button>
-              ) : (
-                <Stack spacing={1}>
-                  <TextField
-                    type="password"
-                    placeholder="새 비밀번호 (6자 이상)"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    fullWidth
-                    size="small"
-                  />
-                  <Stack direction="row" spacing={1}>
+                  {selectedAvatar ? (
+                    <FontAwesomeIcon
+                      icon={avatarIcons.find(
+                        (icon) => icon.iconName === selectedAvatar
+                      )}
+                      size="lg"
+                      color="white"
+                    />
+                  ) : (
+                    nickname[0]?.toUpperCase() ||
+                    currentUser.email[0]?.toUpperCase()
+                  )}
+                </Avatar>
+
+                {/* 아바타 수정 버튼 */}
+                <IconButton
+                  size="small"
+                  onClick={() => setAvatarModalOpen(true)}
+                  sx={{
+                    position: "absolute",
+                    bottom: 6,
+                    right: 6,
+                    bgcolor: theme.palette.background.paper,
+                    boxShadow: theme.shadows[2],
+                    "&:hover": { bgcolor: alpha(primary, 0.1) },
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Box>
+
+              {/* 닉네임 / 이메일 */}
+              <Box sx={{ mt: 1 }}>
+                {editingNickname ? (
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <TextField
+                      size="small"
+                      value={nickname}
+                      onChange={(e) => setNickname(e.target.value)}
+                    />
                     <Button
-                      fullWidth
                       variant="contained"
                       color="primary"
-                      onClick={handlePasswordChange}
+                      onClick={handleNicknameSave}
                     >
                       저장
                     </Button>
                     <Button
-                      fullWidth
                       variant="text"
-                      onClick={() => setShowPasswordInput(false)}
+                      onClick={() => setEditingNickname(false)}
                     >
                       취소
                     </Button>
                   </Stack>
-                </Stack>
-              )}
+                ) : (
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      {nickname || "닉네임 없음"}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => setEditingNickname(true)}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                )}
+
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 0.5, color: "text.secondary" }}
+                >
+                  {currentUser.email}
+                </Typography>
+              </Box>
+
+              {/* 통계 */}
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                justifyContent="center"
+                alignItems="center"
+                sx={{ mt: 2.5 }}
+              >
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    bgcolor: chipBg,
+                    borderRadius: 999,
+                    minWidth: 130,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    총 일기 {diaryCount}개
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    bgcolor: chipBg,
+                    borderRadius: 999,
+                    minWidth: 130,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    평균 점수 {averageScore}
+                  </Typography>
+                </Box>
+              </Stack>
             </Box>
           </CardContent>
         </Card>
 
-        {/* 하단 액션들 */}
-        <Stack spacing={1.2}>
-          <Button
-            component={Link}
-            to="/calendar"
-            variant="outlined"
-            color="primary"
-            fullWidth
-          >
-            내 일기 보러가기
-          </Button>
+        {/* === 앱 설정 (컬러 테마) === */}
+        <Card
+          sx={{
+            mb: 3,
+            borderRadius: 3,
+            boxShadow: theme.shadows[0],
+          }}
+        >
+          <CardContent>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, mb: 1 }}
+            >
+              앱 컬러 테마
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ mb: 2, color: "text.secondary" }}
+            >
+              마이페이지에서 선택한 테마가 앱 전체에 적용됩니다.
+            </Typography>
 
-          <Button
-            component={Link}
-            to="/admin"
-            variant="outlined"
-            color="primary"
-            fullWidth
-          >
-            자동 문구 추가하기
-          </Button>
+            <Stack direction="row" spacing={1.2} flexWrap="wrap">
+              {themeOptions.map((opt) => {
+                const selected = themeName === opt.id;
+                return (
+                  <Button
+                    key={opt.id}
+                    variant={selected ? "contained" : "outlined"}
+                    size="small"
+                    onClick={() => setThemeName(opt.id)}
+                    sx={{
+                      borderRadius: 999,
+                      px: 1.8,
+                      py: 0.6,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        bgcolor: opt.color,
+                      }}
+                    />
+                    <span>{opt.label}</span>
+                  </Button>
+                );
+              })}
+            </Stack>
+          </CardContent>
+        </Card>
 
-          <Divider sx={{ my: 0.5 }} />
+        {/* === 보안 설정 (비밀번호 변경) === */}
+        <Card
+          sx={{
+            mb: 3,
+            borderRadius: 3,
+            boxShadow: theme.shadows[0],
+          }}
+        >
+          <CardContent>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, mb: 1 }}
+            >
+              보안 설정
+            </Typography>
+            {!showPasswordInput ? (
+              <Button
+                fullWidth
+                variant="outlined"
+                color="primary"
+                onClick={() => setShowPasswordInput(true)}
+              >
+                비밀번호 변경
+              </Button>
+            ) : (
+              <Stack spacing={1.2}>
+                <TextField
+                  type="password"
+                  placeholder="새 비밀번호 (6자 이상)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  fullWidth
+                  size="small"
+                />
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    onClick={handlePasswordChange}
+                  >
+                    저장
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="text"
+                    onClick={() => setShowPasswordInput(false)}
+                  >
+                    취소
+                  </Button>
+                </Stack>
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
 
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            onClick={handleLogout}
-          >
-            로그아웃
-          </Button>
-        </Stack>
+        {/* === 기타 액션 === */}
+        <Card
+          sx={{
+            mb: 3,
+            borderRadius: 3,
+            boxShadow: theme.shadows[0],
+          }}
+        >
+          <CardContent>
+            <Stack spacing={1.2}>
+              <Button
+                component={Link}
+                to="/calendar"
+                variant="outlined"
+                color="primary"
+                fullWidth
+              >
+                내 캘린더 / 일기 보기
+              </Button>
+
+              <Button
+                component={Link}
+                to="/admin"
+                variant="outlined"
+                color="primary"
+                fullWidth
+              >
+                자동 문구 관리하기
+              </Button>
+
+              <Divider sx={{ my: 0.5 }} />
+
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                onClick={handleLogout}
+              >
+                로그아웃
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
 
         {/* 아바타 선택 모달 */}
-        <Modal open={avatarModalOpen} onClose={() => setAvatarModalOpen(false)}>
+        <Modal
+          open={avatarModalOpen}
+          onClose={() => setAvatarModalOpen(false)}
+        >
           <Box
             sx={{
               backgroundColor: "background.paper",
@@ -392,7 +516,10 @@ export default function ProfilePage() {
               outline: "none",
             }}
           >
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
+            <Typography
+              variant="h6"
+              sx={{ mb: 2, fontWeight: 700 }}
+            >
               아바타 선택
             </Typography>
             <Grid container spacing={1.5}>

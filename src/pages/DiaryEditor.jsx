@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import dayjs from "dayjs";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { db } from "../firebase/firebaseConfig";
 import {
   collection,
@@ -24,8 +24,6 @@ import {
 import { moodIcons } from "../context/moodIcons";
 import { useAuth } from "../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
-// 기분 점수 아이콘
 import {
   faFaceSadTear,
   faFaceTired,
@@ -41,18 +39,8 @@ import {
   faFaceLaughBeam as fasFaceLaughBeam,
 } from "@fortawesome/free-solid-svg-icons";
 
-// 안전한 Date 변환 유틸 (없으면 간단 버전 포함)
-const toSafeDate = (v) => {
-  if (!v) return null;
-  try {
-    if (typeof v?.toDate === "function") return v.toDate(); // Firestore Timestamp
-    if (v instanceof Date) return v;
-    const d = new Date(v);
-    return Number.isNaN(d.getTime()) ? null : d;
-  } catch {
-    return null;
-  }
-};
+// ✅ toSafeDate 중앙 유틸 사용
+import { toSafeDate } from "../utils/firebaseHelpers";
 
 const scoreIcons = [
   { gray: faFaceSadTear, color: fasFaceSadTear, label: "매우 나쁨" },
@@ -68,7 +56,21 @@ export default function DiaryEditor() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const dateFromQuery = searchParams.get("date"); // YYYY-MM-DD
+
+  const today = dayjs();
+  const todayStr = today.format("YYYY-MM-DD");
+
+  // ✅ 초기 날짜: 쿼리에서 온 값(오늘/과거)이면 그걸 사용, 아니면 오늘
+  const [date, setDate] = useState(() => {
+    if (dateFromQuery && !dayjs(dateFromQuery).isAfter(today, "day")) {
+      return dateFromQuery;
+    }
+    return todayStr;
+  });
+
   const [mood, setMood] = useState("");
   const [score, setScore] = useState(3);
   const [content, setContent] = useState("");
@@ -123,25 +125,32 @@ export default function DiaryEditor() {
       alert("로그인이 필요합니다.");
       return;
     }
+
+    // ✅ 오늘 이후 일기 방지
+    if (dayjs(date).isAfter(today, "day")) {
+      alert("오늘 이후 날짜로는 일기를 쓸 수 없습니다.");
+      return;
+    }
+
     try {
       if (id) {
         await updateDoc(doc(db, "diaries", id), {
           userId: currentUser.uid,
-          date: dayjs(date).toDate(), // 사용자가 선택한 날짜
+          date: dayjs(date).toDate(), // 해당일
           mood,
           score,
           content,
-          updatedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(), // 실제 수정 시각
         });
         alert("일기가 수정되었습니다.");
       } else {
         await addDoc(collection(db, "diaries"), {
           userId: currentUser.uid,
-          date: dayjs(date).toDate(), // 기본: 오늘로 세팅
+          date: dayjs(date).toDate(), // 캘린더 선택 날짜 or 오늘
           mood,
           score,
           content,
-          createdAt: serverTimestamp(),
+          createdAt: serverTimestamp(), // 실제 작성 시각
         });
         alert("일기가 저장되었습니다.");
       }
@@ -166,7 +175,12 @@ export default function DiaryEditor() {
   return (
     <div className="container">
       <Box>
-        <Typography variant="h5" mb={3} textAlign="center" sx={{ fontWeight: 800 }}>
+        <Typography
+          variant="h5"
+          mb={3}
+          textAlign="center"
+          sx={{ fontWeight: 800 }}
+        >
           {id ? "일기 수정" : "새 일기 작성"}
         </Typography>
 
@@ -179,11 +193,17 @@ export default function DiaryEditor() {
           fullWidth
           sx={{ mb: 2 }}
           InputLabelProps={{ shrink: true }}
+          inputProps={{ max: todayStr }} // ✅ 미래 날짜 선택 제한
         />
 
         {/* 오늘의 기분 선택 */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="subtitle1" mb={2} textAlign="center" sx={{ fontWeight: 700 }}>
+          <Typography
+            variant="subtitle1"
+            mb={2}
+            textAlign="center"
+            sx={{ fontWeight: 700 }}
+          >
             오늘의 기분
           </Typography>
 
@@ -220,8 +240,9 @@ export default function DiaryEditor() {
                         transform: "translateY(-3px)",
                         boxShadow: tileHoverShadow,
                       },
-                      background:
-                        isSelected ? alpha(primary, 0.06) : "transparent",
+                      background: isSelected
+                        ? alpha(primary, 0.06)
+                        : "transparent",
                     }}
                   >
                     <img
@@ -267,7 +288,12 @@ export default function DiaryEditor() {
 
         {/* 오늘의 기분 점수 선택 */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="subtitle1" mb={2} textAlign="center" sx={{ fontWeight: 700 }}>
+          <Typography
+            variant="subtitle1"
+            mb={2}
+            textAlign="center"
+            sx={{ fontWeight: 700 }}
+          >
             오늘의 기분 점수
           </Typography>
           <Box
@@ -297,7 +323,9 @@ export default function DiaryEditor() {
                       transform: "translateY(-3px)",
                       boxShadow: tileHoverShadow,
                     },
-                    background: isSelected ? alpha(primary, 0.06) : "transparent",
+                    background: isSelected
+                      ? alpha(primary, 0.06)
+                      : "transparent",
                   }}
                 >
                   <FontAwesomeIcon
@@ -339,7 +367,11 @@ export default function DiaryEditor() {
               ))}
             </TextField>
           ) : (
-            <Typography variant="body2" color="text.secondary" textAlign="center">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              textAlign="center"
+            >
               추천 문구가 없습니다.
             </Typography>
           )}

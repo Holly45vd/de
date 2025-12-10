@@ -1,38 +1,60 @@
 // src/styles/theme.js
 import { createTheme } from "@mui/material";
 
-const coral = "#FF6B6B";     // CTA
-const blush = "#F4C2C2";     // 서브 배경/칩
-const navy  = "#0A0F29";     // 본문/헤더
-const burg  = "#8C0B1E";     // 포인트
+// 기본 컬러셋들
+const palettes = {
+  coral: {
+    primary: "#FF6B6B",
+    secondary: "#8C0B1E",
+    background: "#FFF8F8",
+    paper: "#FFFFFF",
+    textPrimary: "#0A0F29",
+    textSecondary: "#2F3650",
+  },
+  navy: {
+    primary: "#28336D",
+    secondary: "#8C7A5B",
+    background: "#E8E1D6",
+    paper: "#F5EFE4",
+    textPrimary: "#283036",
+    textSecondary: "#4B4F5C",
+  },
+  // 필요하면 더 추가 (plum, forest 등)
+};
 
-export const theme = createTheme({
-  palette: {
-    mode: "light",
-    primary:   { main: coral, contrastText: "#fff" },
-    secondary: { main: burg,  contrastText: "#fff" },
-    background:{ default: "#FFF8F8", paper: "#FFFFFF" },
-    text:      { primary: navy, secondary: "#2F3650" },
-    info:      { main: blush, contrastText: navy },
-  },
-  shape: { borderRadius: 14 },
-  typography: {
-    fontFamily: `"Orbit","Hi Melody","Gaegu","ZCOOL KuaiLe",system-ui,sans-serif`,
-    h5:   { fontWeight: 700 },
-    body1:{ lineHeight: 1.7 },
-  },
-  components: {
-    MuiButton: {
-      defaultProps: { variant: "contained", color: "primary" },
-      styleOverrides: {
-        root: { textTransform: "none", fontWeight: 700, boxShadow: "none" },
-        containedPrimary: { boxShadow: "none" },
+// 테마 생성 함수
+export function createAppTheme(mode = "coral") {
+  const p = palettes[mode] ?? palettes.coral;
+
+  return createTheme({
+    palette: {
+      mode: "light",
+      primary:   { main: p.primary, contrastText: "#fff" },
+      secondary: { main: p.secondary, contrastText: "#fff" },
+      background:{ default: p.background, paper: p.paper },
+      text:      { primary: p.textPrimary, secondary: p.textSecondary },
+      info:      { main: "#F4C2C2", contrastText: p.textPrimary },
+    },
+    typography: {
+      fontFamily: `"Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`,
+      h5: { fontWeight: 800 },
+    },
+    components: {
+      MuiButton: {
+        defaultProps: { variant: "contained", color: "primary" },
+        styleOverrides: {
+          root: { textTransform: "none", fontWeight: 700, boxShadow: "none" },
+          containedPrimary: { boxShadow: "none" },
+        },
+      },
+      MuiChip: {
+        styleOverrides: {
+          root: { fontWeight: 600 },
+        },
       },
     },
-    MuiChip: {
-      styleOverrides: {
-        root: { background: blush, color: navy, fontWeight: 600 },
-      },
-    },
-  },
-});
+  });
+}
+
+// 기본 테마(앱 최초 로딩용)
+export const theme = createAppTheme("coral");

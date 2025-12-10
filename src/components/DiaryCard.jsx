@@ -2,70 +2,74 @@
 import React from "react";
 import { Card, CardContent, Typography, Box } from "@mui/material";
 import { moodIcons } from "../context/moodIcons";
+import { formatDiaryDate } from "../utils/formatDate";
 
 export default function DiaryCard({ diary, onClick }) {
-  // 날짜 변환 함수
-  const formatDate = (date) => {
-    if (!date) return "";
-    if (typeof date.toDate === "function") {
-      return date.toDate().toLocaleDateString();
-    }
-    if (typeof date === "string") {
-      return new Date(date).toLocaleDateString();
-    }
-    return "";
-  };
-
-  // 감정 아이콘 가져오기 (이미지 기반)
-  const moodIcon = diary?.mood ? moodIcons[diary.mood]?.color : null;
+  const moodData = diary?.mood ? moodIcons[diary.mood] : null;
+  const preview =
+    diary?.content?.length > 80
+      ? diary.content.slice(0, 80) + "..."
+      : diary?.content || "내용이 없습니다.";
 
   return (
     <Card
       onClick={onClick}
       sx={{
         mb: 2,
-        cursor: "pointer",
-        backgroundColor: "#fff",
+        cursor: onClick ? "pointer" : "default",
         borderRadius: 2,
         boxShadow: 1,
-        transition: "0.3s",
         "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: 4,
+          boxShadow: onClick ? 3 : 1,
         },
       }}
     >
-      <CardContent>
-        {/* 감정 아이콘 + 점수 */}
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-          <Box display="flex" alignItems="center" gap={1}>
-            {moodIcon ? (
-              <img
-                src={moodIcon}
-                alt="mood"
-                style={{ width: 32, height: 32 }}
-              />
-            ) : (
-              <Typography variant="body2">❔</Typography>
-            )}
-            <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-              {diary?.mood?.split(" ")[1] || "미정"}
-            </Typography>
-          </Box>
-          {diary?.score && (
-            <Typography
-              variant="body1"
-              sx={{ color: "#45C4B0", fontWeight: "bold" }}
-            >
-              {diary.score} 
-            </Typography>
+      <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        {/* 아이콘 */}
+        <Box sx={{ flexShrink: 0 }}>
+          {moodData?.color ? (
+            <img
+              src={moodData.color}
+              alt={diary.mood}
+              style={{ width: 48, height: 48 }}
+            />
+          ) : (
+            <Typography fontSize={32}>📝</Typography>
           )}
         </Box>
 
-        {/* 날짜 */}
-        <Typography variant="caption" color="textSecondary">
-          {formatDate(diary?.date)}
-        </Typography>
+        {/* 내용 + 날짜/점수 */}
+        <Box sx={{ flex: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              mb: 0.5,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {preview}
+          </Typography>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              {formatDiaryDate(diary?.date, "YYYY.MM.DD")}
+            </Typography>
+            {diary?.score != null && (
+              <Typography variant="caption" color="text.secondary">
+                점수 {diary.score}
+              </Typography>
+            )}
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );

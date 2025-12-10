@@ -1,7 +1,6 @@
-// src/components/Recent30DaysChart.jsx
-import React, { useEffect, useState } from "react";
+// src/components/MonthlyChart.jsx
+import React, { useMemo, useState } from "react";
 import { useTheme, alpha } from "@mui/material/styles";
-import { moodIcons } from "../context/moodIcons";
 import {
   Box,
   Typography,
@@ -14,150 +13,146 @@ import CloseIcon from "@mui/icons-material/Close";
 import {
   LineChart,
   Line,
+  CartesianGrid,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase/firebaseConfig";
-import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
+import "dayjs/locale/ko";
+import { moodIcons } from "../context/moodIcons";
 
-export default function Recent30DaysChart() {
+dayjs.locale("ko");
+
+export default function MonthlyChart({ diaries = [] }) {
   const theme = useTheme();
   const primary = theme.palette.primary.main;
   const textSecondary = theme.palette.text.secondary;
-  const grid = alpha(theme.palette.divider, 0.5);
 
-  const { currentUser } = useAuth();
-  const navigate = useNavigate();
-  const [chartData, setChartData] = useState([]);
-
-  // 모달 상태
   const [open, setOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [diaryDetails, setDiaryDetails] = useState([]);
+  const [selectedDateKey, setSelectedDateKey] = useState(null); // YYYY-MM-DD
+  const [selectedDiaries, setSelectedDiaries] = useState([]);
 
-  /** ✅ 최근 30일 데이터 불러오기 */
-  useEffect(() => {
-    if (!currentUser?.uid) return;
+  // ✅ 날짜별 그룹
+  const diariesByDate = useMemo(() => {
+    const map = {};
+    diaries.forEach((d) => {
+      if (!d.date) return;
+      const key = dayjs(d.date).format("YYYY-MM-DD");
+      if (!map[key]) map[key] = [];
+      map[key].push(d);
+    });
+    return map;
+  }, [diaries]);
 
-    const fetchData = async () => {
-      try {
-        const today = dayjs();
-        const startDate = today.subtract(30, "day").startOf("day");
+  // ✅ 최근 30일 차트 데이터
+  const chartData = useMemo(() => {
+    if (!diaries.length) return [];
 
-        const q = query(collection(db, "diaries"), where("userId", "==", currentUser.uid));
-        const snap = await getDocs(q);
-        const items = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const today = dayjs().endOf("day");
+    const start = today.subtract(29, "day").startOf("day");
 
-        // 최근 30일만 필터링
-        const filtered = items.filter((item) => {
-          const date = dayjs(item.date.toDate());
-          return date.isAfter(startDate) && date.isBefore(today.add(1, "day"));
-        });
+    const points = [];
 
-        // 그래프용 포맷
-        const formatted = filtered.map((item) => ({
-          date: dayjs(item.date.toDate()).format("MM-DD"),
-          score: item.score || 0,
-        }));
+    for (let i = 0; i < 30; i++) {
+      const day = start.add(i, "day");
+      const key = day.format("YYYY-MM-DD");
+      const list = diariesByDate[key] || [];
 
-        // 날짜순 정렬
-        formatted.sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
+      const avgScore =
+        list.length > 0
+          ? list.reduce((sum, d) => sum + (d.score || 0), 0) / list.length
+          : 0;
 
-        setChartData(formatted);
-      } catch (error) {
-        console.error("최근 30일 데이터 불러오기 실패:", error);
-      }
-    };
-
-    fetchData();
-  }, [currentUser]);
-
-  /** ✅ 특정 날짜 점 클릭 → 해당 날짜의 일기 불러오기 */
-  const handleDotClick = async (clickedDate) => {
-    if (!currentUser?.uid) return;
-
-    try {
-      const q = query(collection(db, "diaries"), where("userId", "==", currentUser.uid));
-      const snap = await getDocs(q);
-      const filtered = snap.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((item) => dayjs(item.date.toDate()).format("MM-DD") === clickedDate);
-
-      setDiaryDetails(filtered);
-      setSelectedDate(clickedDate);
-      setOpen(true);
-    } catch (error) {
-      console.error("해당 날짜의 일기 불러오기 실패:", error);
+      points.push({
+        key, // YYYY-MM-DD
+        date: day.format("MM-DD"),
+        score: avgScore,
+      });
     }
-  };
 
-  /** ✅ 일기 클릭 시 상세 페이지로 이동 */
-  const handleDiaryClick = (id) => {
-    setOpen(false);
-    navigate(`/diary/${id}`);
+    return points;
+  }, [diariesByDate, diaries.length]);
+
+  const maxScore =
+    chartData.length > 0
+      ? Math.max(5, ...chartData.map((item) => item.score || 0))
+      : 5;
+
+  const handleDotClick = (payload) => {
+    if (!payload || !payload.key) return;
+    const key = payload.key; // YYYY-MM-DD
+    setSelectedDateKey(key);
+    setSelectedDiaries(diariesByDate[key] || []);
+    setOpen(true);
   };
 
   return (
-    <Box sx={{ mt: 5, p: 2, borderRadius: 2, boxShadow: 2 }}>
-      {chartData.length > 0 ? (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid stroke={grid} strokeDasharray="3 3" />
-            <XAxis
-              dataKey="date"
-              stroke={textSecondary}
-              label={{ value: "날짜", position: "insideBottomRight", offset: -5 }}
-            />
-            <YAxis
-              stroke={textSecondary}
-              domain={[0, Math.max(...chartData.map((item) => item.score), 5)]}
-              allowDecimals={false}
-              label={{ value: "점수", angle: -90, position: "insideLeft" }}
-            />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="score"
-              stroke={primary}           // ✅ 테마 적용
-              strokeWidth={3}
-              dot={({ payload, cx, cy }) => (
-                <g>
-                  {/* 실제 보이는 점 */}
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={8}
-                    fill={primary}       // ✅ 테마 적용
-                    stroke="#fff"
-                    strokeWidth={2}
-                  />
-                  {/* 클릭만 담당하는 투명 점 */}
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={14}
-                    fill="transparent"
-                    style={{ cursor: "pointer" }}
-                    onClick={() => handleDotClick(payload.date)}
-                  />
-                </g>
-              )}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      ) : (
-        <Typography color="textSecondary" textAlign="center" mt={3}>
+    <Box
+      sx={{
+        mt: 4,
+        p: 2,
+        borderRadius: 2,
+        backgroundColor:
+          theme.palette.mode === "light"
+            ? alpha(primary, 0.04)
+            : alpha(primary, 0.12),
+      }}
+    >
+      <Typography
+        variant="h6"
+        sx={{ mb: 2, fontWeight: 800, color: "primary.main" }}
+      >
+        최근 30일 기분 점수
+      </Typography>
+
+      {chartData.length === 0 ? (
+        <Typography color="text.secondary">
           최근 30일 동안 작성된 일기가 없습니다.
         </Typography>
+      ) : (
+        <Box sx={{ width: "100%", height: 260 }}>
+          <ResponsiveContainer>
+            <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={alpha(textSecondary, 0.3)} />
+              <XAxis
+                dataKey="date"
+                stroke={textSecondary}
+                tick={{ fontSize: 11 }}
+              />
+              <YAxis
+                stroke={textSecondary}
+                domain={[0, maxScore]}
+                allowDecimals={false}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke={primary}
+                strokeWidth={3}
+                dot={({ cx, cy, payload }) => (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={5}
+                    fill={primary}
+                    stroke="#fff"
+                    strokeWidth={1}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleDotClick(payload)}
+                  />
+                )}
+                activeDot={{ r: 7 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
       )}
 
-      {/* ===== 모달 ===== */}
+      {/* ✅ 날짜별 상세 모달 */}
       <Modal open={open} onClose={() => setOpen(false)}>
         <Box
           sx={{
@@ -165,55 +160,78 @@ export default function Recent30DaysChart() {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 400,
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: 24,
-            p: 3,
+            width: "90%",
+            maxWidth: 480,
             maxHeight: "80vh",
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            borderRadius: 2,
+            p: 2,
             overflowY: "auto",
           }}
         >
-          {/* 모달 헤더 */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2, alignItems: "center" }}>
-            <Typography variant="subtitle2" sx={{ color: "text.secondary", fontSize: "0.9rem", fontWeight: "normal" }}>
-              {selectedDate}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 1,
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              {selectedDateKey
+                ? dayjs(selectedDateKey).format("YYYY-MM-DD")
+                : "선택된 날짜 없음"}
             </Typography>
-            <IconButton onClick={() => setOpen(false)}>
+            <IconButton onClick={() => setOpen(false)} size="small">
               <CloseIcon />
             </IconButton>
           </Box>
 
-          {/* 일기 상세 내용 */}
-          {diaryDetails.length > 0 ? (
-            diaryDetails.map((diary) => (
-              <Card
-                key={diary.id}
-                sx={{
-                  mb: 2,
-                  cursor: "pointer",
-                  "&:hover": { backgroundColor: alpha(primary, 0.08) }, // ✅ 민트 대체
-                }}
-                onClick={() => handleDiaryClick(diary.id)}
-              >
-                <CardContent>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    {/* 기분 아이콘 */}
-                    <img
-                      src={moodIcons[diary.mood]?.color}
-                      alt={diary.mood}
-                      style={{ width: 35, height: 30 }}
-                    />
-                    {/* 내용 20자 제한 */}
-                    <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
-                      {diary.content.length > 20
-                        ? `${diary.content.slice(0, 20)}...`
-                        : diary.content}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            ))
+          {selectedDiaries.length > 0 ? (
+            selectedDiaries.map((diary) => {
+              const moodData = diary.mood ? moodIcons[diary.mood] : null;
+              return (
+                <Card
+                  key={diary.id}
+                  sx={{ mb: 1.5, borderRadius: 2, boxShadow: 1 }}
+                >
+                  <CardContent sx={{ display: "flex", gap: 2 }}>
+                    {moodData?.color ? (
+                      <Box
+                        sx={{
+                          flexShrink: 0,
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <img
+                          src={moodData.color}
+                          alt={diary.mood}
+                          style={{ width: 48, height: 48 }}
+                        />
+                      </Box>
+                    ) : null}
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        {diary.content?.length > 120
+                          ? diary.content.slice(0, 120) + "..."
+                          : diary.content || "내용이 없습니다."}
+                      </Typography>
+                      {diary.score != null && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: "block", mt: 0.5 }}
+                        >
+                          기분 점수: {diary.score}
+                        </Typography>
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              );
+            })
           ) : (
             <Typography>이 날짜에는 작성된 일기가 없습니다.</Typography>
           )}

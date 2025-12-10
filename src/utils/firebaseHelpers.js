@@ -17,8 +17,12 @@ export function toSafeDate(v) {
 
 /** 다이어리 문서 정규화 */
 export function normalizeDiary(raw) {
-  const date = toSafeDate(raw?.date);
+  const date = toSafeDate(raw?.date);           // ‘해당일’ (캘린더에서 선택한 날짜)
+  const createdAt = toSafeDate(raw?.createdAt); // 실제 작성한 시각
+  const updatedAt = toSafeDate(raw?.updatedAt); // 수정한 시각(있으면)
+
   const score = raw?.score == null ? null : Number(raw.score);
+
   return {
     id: raw?.id || "",
     userId: raw?.userId || "",
@@ -26,9 +30,12 @@ export function normalizeDiary(raw) {
     content: raw?.content || "",
     mood: raw?.mood || null,
     score: Number.isNaN(score) ? null : score,
-    date, // JS Date | null
+    date,       // 해당일
+    createdAt,  // 작성 시각
+    updatedAt,  // 수정 시각
   };
 }
+
 
 /** 저장(임시 날짜 반환으로 UI 즉시 반영) */
 export const saveDiary = async (userId, title, content, mood, score) => {

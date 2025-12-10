@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
+// src/components/WeeklyStatus.jsx
+import React from "react";
 import { Box, Typography, Grid } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase/firebaseConfig";
-import { useAuth } from "../context/AuthContext";
 import { moodIcons } from "../context/moodIcons";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -11,11 +9,8 @@ import "dayjs/locale/ko";
 
 dayjs.locale("ko");
 
-export default function WeeklyStatus() {
+export default function WeeklyStatus({ diaries = [] }) {
   const theme = useTheme();
-  const { currentUser } = useAuth();
-  const [weekData, setWeekData] = useState({});
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const today = dayjs();
@@ -30,46 +25,6 @@ export default function WeeklyStatus() {
 
   const dayLabels = ["일", "월", "화", "수", "목", "금", "토"];
 
-  useEffect(() => {
-    if (!currentUser?.uid) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchWeeklyData = async () => {
-      try {
-        const q = query(
-          collection(db, "diaries"),
-          where("userId", "==", currentUser.uid)
-        );
-        const snap = await getDocs(q);
-        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-
-        const statusMap = {};
-        totalDays.forEach((day) => {
-          const dateKey = day.format("YYYY-MM-DD");
-          const diary = items.find(
-            (d) => dayjs(d.date.toDate()).format("YYYY-MM-DD") === dateKey
-          );
-
-          statusMap[dateKey] = diary
-            ? { mood: diary.mood, id: diary.id }
-            : { mood: null, id: null };
-        });
-
-        setWeekData(statusMap);
-      } catch (e) {
-        console.error("주간 데이터 불러오기 실패:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWeeklyData();
-  }, [currentUser]);
-
-  if (loading) return null;
-
   return (
     <Box
       sx={{
@@ -78,23 +33,27 @@ export default function WeeklyStatus() {
         borderRadius: 2,
         backgroundColor:
           theme.palette.mode === "light"
-            ? alpha(theme.palette.primary.main, 0.04) // 연한 코랄 틴트
+            ? alpha(theme.palette.primary.main, 0.04)
             : alpha(theme.palette.primary.main, 0.12),
       }}
     >
       <Grid container justifyContent="center" alignItems="center">
         {totalDays.map((day, idx) => {
           const dateKey = day.format("YYYY-MM-DD");
-          const dayData = weekData[dateKey] || {};
-          const { mood, id } = dayData;
+
+          // ✅ HomePage에서 내려온 diaries에서 해당 날짜 일기 찾기
+          const diary = diaries.find(
+            (d) =>
+              d.date && dayjs(d.date).format("YYYY-MM-DD") === dateKey
+          );
+
+          const mood = diary?.mood ?? null;
+          const id = diary?.id ?? null;
 
           const isOutsideCurrentWeek = idx === 0 || idx === totalDays.length - 1;
           const isToday = day.isSame(today, "day");
 
-          const iconSrc = mood
-            ? moodIcons[mood]?.color
-            : moodIcons["default"]?.gray || null;
-
+          const iconSrc = mood ? moodIcons[mood]?.color : null;
           const isClickable = !!id;
 
           const handleClick = () => {
@@ -113,7 +72,7 @@ export default function WeeklyStatus() {
                 alignItems: "center",
                 justifyContent: "center",
                 backgroundColor: isToday
-                  ? alpha(theme.palette.primary.main, 0.12) // ✅ 민트 대체
+                  ? alpha(theme.palette.primary.main, 0.12)
                   : "transparent",
                 borderRadius: 1,
                 px: 0.5,
@@ -168,7 +127,10 @@ export default function WeeklyStatus() {
                   }}
                 />
               ) : (
-                <Typography variant="body2" sx={{ mt: 1, color: "text.disabled" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 1, color: "text.disabled" }}
+                >
                   -
                 </Typography>
               )}

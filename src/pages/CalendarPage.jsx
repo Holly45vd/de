@@ -29,7 +29,9 @@ export default function CalendarPage() {
 
   const [diaries, setDiaries] = useState([]);
   const [diariesByDate, setDiariesByDate] = useState({});
-  const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [selectedDate, setSelectedDate] = useState(
+    dayjs().format("YYYY-MM-DD")
+  );
   const [selectedDiaries, setSelectedDiaries] = useState([]);
 
   /** Firestore에서 일기 불러오기 (타입 안전) */
@@ -59,7 +61,7 @@ export default function CalendarPage() {
 
           if (safeDate) {
             const dateKey = dayjs(safeDate).format("YYYY-MM-DD");
-            // 같은 날 여러 개면 마지막 mood만 쓰던 로직 유지 (원하면 배열로 확장 가능)
+            // 같은 날 여러 개면 마지막 mood만 표시
             if (!byDate[dateKey]) byDate[dateKey] = data.mood;
           }
         });
@@ -72,7 +74,8 @@ export default function CalendarPage() {
         setSelectedDate(todayKey);
         setSelectedDiaries(
           all.filter(
-            (d) => d.date && dayjs(d.date).format("YYYY-MM-DD") === todayKey
+            (d) =>
+              d.date && dayjs(d.date).format("YYYY-MM-DD") === todayKey
           )
         );
       } catch (error) {
@@ -88,7 +91,10 @@ export default function CalendarPage() {
     const dateKey = dayjs(date).format("YYYY-MM-DD");
     setSelectedDate(dateKey);
     setSelectedDiaries(
-      diaries.filter((d) => d.date && dayjs(d.date).format("YYYY-MM-DD") === dateKey)
+      diaries.filter(
+        (d) =>
+          d.date && dayjs(d.date).format("YYYY-MM-DD") === dateKey
+      )
     );
   };
 
@@ -130,6 +136,7 @@ export default function CalendarPage() {
   const handleCardClick = (id) => navigate(`/diary/${id}`);
 
   const primary = theme.palette.primary.main;
+  const navyText = "#28336D";
 
   return (
     <Box
@@ -158,8 +165,11 @@ export default function CalendarPage() {
             fontSize: isMobile ? "0.85rem" : "1rem",
             borderRadius: "12px",
             padding: isMobile ? "6px" : "10px",
-            border: `1px solid ${alpha(theme.palette.text.primary, 0.12)}`,
-            background: theme.palette.background.paper,
+            border: `1px solid ${alpha(
+              theme.palette.text.primary,
+              0.12
+            )}`,
+            background: theme.palette.background.default,
           },
           ".react-calendar__tile": {
             flex: "1 0 calc(100% / 7)",
@@ -181,7 +191,7 @@ export default function CalendarPage() {
           value={dayjs(selectedDate).toDate()}
           onClickDay={handleDateClick}
           tileContent={renderTileContent}
-          formatDay={() => ""} // 기본 날짜 숫자는 타일 콘텐츠로 대체
+          formatDay={() => ""} // 기본 날짜 숫자는 tileContent에서 처리
         />
       </Box>
 
@@ -196,11 +206,16 @@ export default function CalendarPage() {
                 mb: 2,
                 cursor: "pointer",
                 borderRadius: 2,
+                backgroundColor: "#FFFFFF",         // 흰 바탕
+                color: navyText,                    // 기본 텍스트 네이비
                 boxShadow: 1,
-                "&:hover": { boxShadow: 4, backgroundColor: alpha(primary, 0.04) },
+                "&:hover": {
+                  boxShadow: 3,
+                  backgroundColor: alpha(primary, 0.06),
+                },
               }}
             >
-              <CardContent>
+              <CardContent sx={{ py: 1.5, px: 2 }}>
                 <Box
                   display="flex"
                   alignItems="center"
@@ -208,12 +223,19 @@ export default function CalendarPage() {
                   sx={{ width: "100%" }}
                 >
                   {/* 왼쪽: 아이콘 + 내용 */}
-                  <Box display="flex" alignItems="center" gap={1.5} sx={{ flex: 1 }}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    gap={1.5}
+                    sx={{ flex: 1 }}
+                  >
+                    {/* 아이콘만 (동그라미 제거) */}
                     <img
                       src={moodIcons[diary.mood]?.color}
                       alt={moodIcons[diary.mood]?.ko || diary.mood}
                       style={{ width: 30, height: 30 }}
                     />
+
                     <Typography
                       variant="body1"
                       sx={{
@@ -222,6 +244,7 @@ export default function CalendarPage() {
                         overflow: "hidden",
                         whiteSpace: "nowrap",
                         textOverflow: "ellipsis",
+                        color: navyText,
                       }}
                     >
                       {diary.content || ""}
@@ -234,7 +257,7 @@ export default function CalendarPage() {
                     sx={{
                       minWidth: "64px",
                       textAlign: "center",
-                      color: "text.secondary",
+                      color: navyText,
                       fontWeight: 700,
                     }}
                   >
@@ -255,7 +278,7 @@ export default function CalendarPage() {
               variant="contained"
               color="primary"
               startIcon={<EditNoteIcon />}
-              onClick={() => navigate("/editor")}
+              onClick={() => navigate(`/editor?date=${selectedDate}`)}
             >
               새 일기 쓰기
             </Button>
