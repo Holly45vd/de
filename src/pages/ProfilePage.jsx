@@ -39,7 +39,9 @@ export default function ProfilePage() {
   const theme = useTheme();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const { themeName, setThemeName } = useColorTheme();
+
+  // 🔹 컬러 테마 컨텍스트
+  const { themeName, setThemeName, themeOptions } = useColorTheme();
 
   const [nickname, setNickname] = useState("");
   const [editingNickname, setEditingNickname] = useState(false);
@@ -173,12 +175,6 @@ export default function ProfilePage() {
   const primary = theme.palette.primary.main;
   const panelBg = alpha(theme.palette.primary.main, 0.08);
   const chipBg = alpha(theme.palette.primary.main, 0.12);
-
-  const themeOptions = [
-    { id: "coral", label: "코랄", color: "#FF6B6B", desc: "밝고 가벼운 느낌" },
-    { id: "navy", label: "네이비", color: "#28336D", desc: "차분한 야간 모드 느낌" },
-    // 필요하면 여기서 계속 추가
-  ];
 
   return (
     <div className="container">
@@ -365,7 +361,7 @@ export default function ProfilePage() {
             </Typography>
 
             <Stack direction="row" spacing={1.2} flexWrap="wrap">
-              {themeOptions.map((opt) => {
+              {(themeOptions || []).map((opt) => {
                 const selected = themeName === opt.id;
                 return (
                   <Button
@@ -387,7 +383,7 @@ export default function ProfilePage() {
                         width: 14,
                         height: 14,
                         borderRadius: "50%",
-                        bgcolor: opt.color,
+                        bgcolor: opt.color || theme.palette.primary.main,
                       }}
                     />
                     <span>{opt.label}</span>

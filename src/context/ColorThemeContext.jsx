@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import { createAppTheme } from "../styles/theme";
+import { createAppTheme, AVAILABLE_THEMES } from "../styles/theme";
 
 const ColorThemeContext = createContext(null);
 
@@ -16,10 +16,21 @@ export function useColorTheme() {
 }
 
 export function ColorThemeProvider({ children }) {
-  // 기본값: coral, 로컬스토리지에서 복원
-  const [themeName, setThemeName] = useState(() => {
+  // 기본값: localStorage → 없으면 coral
+  const [themeName, setThemeNameState] = useState(() => {
     return localStorage.getItem("appTheme") || "coral";
   });
+
+  // 나중에 필요하면 여기서 Firestore 의 preferredThemeId 도 섞을 수 있음
+  useEffect(() => {
+    const stored = localStorage.getItem("appTheme");
+    if (
+      stored &&
+      AVAILABLE_THEMES.some((opt) => opt.id === stored)
+    ) {
+      setThemeNameState(stored);
+    }
+  }, []);
 
   const muiTheme = useMemo(
     () => createAppTheme(themeName),
@@ -27,12 +38,20 @@ export function ColorThemeProvider({ children }) {
   );
 
   const handleChangeTheme = (name) => {
-    setThemeName(name);
-    localStorage.setItem("appTheme", name);
+    // 존재하는 테마만 허용
+    if (!AVAILABLE_THEMES.some((opt) => opt.id === name)) return;
+    setThemeNameState(name);
+    localStorage.setItem("appTheme", name);   // 👉 이후부터 이게 디폴트
   };
 
   return (
-    <ColorThemeContext.Provider value={{ themeName, setThemeName: handleChangeTheme }}>
+    <ColorThemeContext.Provider
+      value={{
+        themeName,
+        setThemeName: handleChangeTheme,
+        themeOptions: AVAILABLE_THEMES,
+      }}
+    >
       <ThemeProvider theme={muiTheme}>
         <CssBaseline />
         {children}
